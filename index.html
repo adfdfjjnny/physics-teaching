@@ -197,7 +197,8 @@
       async function loadCatalog() {
         try {
           // 直接从 GitHub 读取最新目录（审批通过后即时生效，无需部署）
-          const resp = await fetch('https://raw.githubusercontent.com/adfdfjjnny/physics-teaching/main/catalog.json');
+          // 加时间戳绕过CDN缓存，审批通过后即时更新
+          const resp = await fetch('https://raw.githubusercontent.com/adfdfjjnny/physics-teaching/main/catalog.json?t=' + Date.now());
           if (!resp.ok) throw new Error('HTTP ' + resp.status);
           catalog = await resp.json();
           renderNav();
