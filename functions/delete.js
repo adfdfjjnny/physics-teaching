@@ -42,7 +42,7 @@ export async function onRequest(context) {
 async function rebuildCat(token, repo) {
   const h = { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json', 'User-Agent': 'cf-pages' };
   const CATS = [
-    { id:'1-li' },{ id:'2-re' },{ id:'3-dianlu' },{ id:'4-dianci' },{ id:'5-lizi' },{ id:'6-guang' },{ id:'7-yuan' }
+    { id:'1-li' },{ id:'2-re' },{ id:'3-dianlu' },{ id:'8-dianchang' },{ id:'4-dianci' },{ id:'5-lizi' },{ id:'6-guang' },{ id:'7-yuan' }
   ];
   const cats = [];
   for (const c of CATS) {
