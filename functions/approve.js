@@ -66,6 +66,7 @@ async function rebuildCatalog(token, repo) {
     { id:'1-li', name:'力', fullName:'力学', emoji:'🍎', color:'#2563eb', desc:'牛顿定律、运动学、万有引力等' },
     { id:'2-re', name:'热', fullName:'热学', emoji:'🔥', color:'#dc2626', desc:'热力学定律、分子动理论等' },
     { id:'3-dianlu', name:'电路', fullName:'电路', emoji:'⚡', color:'#f59e0b', desc:'欧姆定律、串并联电路、基尔霍夫等' },
+    { id:'8-dianchang', name:'电场', fullName:'电场', emoji:'🔵', color:'#0891b2', desc:'电场强度、电场线、电势、电容器等' },
     { id:'4-dianci', name:'电磁感应', fullName:'电磁感应', emoji:'🧲', color:'#10b981', desc:'法拉第定律、楞次定律、互感自感等' },
     { id:'5-lizi', name:'带电粒子', fullName:'带电粒子在磁场中运动', emoji:'⚛️', color:'#8b5cf6', desc:'洛伦兹力、圆周运动、质谱仪等' },
     { id:'6-guang', name:'光', fullName:'光学', emoji:'💡', color:'#f97316', desc:'几何光学、波动光学、干涉衍射等' },
