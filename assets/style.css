@@ -62,11 +62,11 @@ body {
 }
 
 .title-logo {
-  height: 48px;
+  height: 72px;
   width: auto;
   vertical-align: middle;
-  margin-right: 8px;
-  border-radius: 4px;
+  margin-right: 10px;
+  border-radius: 6px;
 }
 
 .site-subtitle {
