@@ -96,10 +96,12 @@ function scanCategory(cat) {
 
   const files = fs.readdirSync(dirPath);
 
-  // 筛选HTML文件，排除隐藏文件
+  // 筛选HTML文件，排除隐藏文件和 _pending 目录
   const htmlFiles = files.filter(f => {
     return /\.html?$/i.test(f) && !f.startsWith('.');
   });
+  // 额外：确保 _pending 中的文件不会被扫描到
+  // （_pending 目录本身不在 category 子目录中，所以不会进入扫描范围）
 
   // 按文件名排序（数字前缀优先）
   htmlFiles.sort((a, b) => a.localeCompare(b, 'zh-CN'));
