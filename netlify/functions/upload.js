@@ -105,7 +105,8 @@ exports.handler = async (event) => {
   }
 
   // ----- 调用 GitHub API -----
-  const filePath = `${category}/${filename}`;
+  // 上传到待审批区
+  const filePath = `_pending/${category}/${filename}`;
   const apiUrl = `https://api.github.com/repos/${repo}/contents/${filePath}`;
 
   try {
@@ -165,10 +166,9 @@ exports.handler = async (event) => {
     return json(200, {
       ok: true,
       message: existingSha ? `已更新「${filename}」` : `「${filename}」上传成功！`,
-      detail: existingSha
-        ? '文件已更新，GitHub 正在触发重新部署，约1-2分钟后在新页面可见。'
-        : '文件已提交到 GitHub，Netlify 正在自动部署，约1-2分钟后即可在首页看到新程序。',
-      url: result.content?.html_url || ''
+      detail: '文件已提交到待审批区，等待管理员审批后上线。',
+      url: result.content?.html_url || '',
+      pending: true
     });
 
   } catch (err) {
