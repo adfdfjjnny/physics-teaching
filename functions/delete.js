@@ -52,7 +52,14 @@ async function rebuildCat(token, repo) {
       if (r.ok) {
         const fs = await r.json();
         if (Array.isArray(fs)) for (const f of fs) {
-          if (/\.html?$/i.test(f.name)) progs.push({ file: f.name, title: f.name.replace(/\.html?$/i,'').replace(/[-_.]/g,' ').trim(), path: `${c.id}/${f.name}` });
+          if (/\.html?$/i.test(f.name)) {
+          let author = '';
+          try {
+            const ar = await fetch(`https://api.github.com/repos/${repo}/contents/${encodeURIComponent(c.id + '/' + f.name + '.author')}?ref=main`, { headers: h });
+            if (ar.ok) { const aj = await ar.json(); author = decodeURIComponent(escape(atob(aj.content))); }
+          } catch {}
+          progs.push({ file: f.name, title: f.name.replace(/\.html?$/i,'').replace(/[-_.]/g,' ').trim(), path: `${c.id}/${f.name}`, author });
+        }
         }
       }
     } catch {}
