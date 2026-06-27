@@ -293,6 +293,12 @@ body {
   line-height: 1.3;
 }
 
+.card-author {
+  font-size: 0.78rem;
+  color: var(--primary);
+  font-weight: 500;
+}
+
 .card-footer {
   margin-top: auto;
   display: flex;
