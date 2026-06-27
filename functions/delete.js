@@ -1,4 +1,4 @@
-// Cloudflare Pages Function — 删除（需 ADMIN_PASSWORD）
+// Cloudflare Pages Function — 删除
 export async function onRequest(context) {
   const { request, env } = context;
   if (request.method === 'OPTIONS') return corsRes(204);
@@ -31,8 +31,49 @@ export async function onRequest(context) {
     });
     if (!dr.ok) { const e = await dr.json().catch(()=>({})); return json(dr.status, { ok: false, error: e.message }); }
 
+    // 更新目录 & 触发部署
+    try { await rebuildCat(token, repo); } catch {}
+    try { await triggerDeploy(env); } catch {}
+
     return json(200, { ok: true, message: `「${filename}」已删除`, detail: '1-2分钟后生效' });
   } catch (e) { return json(500, { ok: false, error: e.message }); }
+}
+
+async function rebuildCat(token, repo) {
+  const h = { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json', 'User-Agent': 'cf-pages' };
+  const CATS = [
+    { id:'1-li' },{ id:'2-re' },{ id:'3-dianlu' },{ id:'4-dianci' },{ id:'5-lizi' },{ id:'6-guang' },{ id:'7-yuan' }
+  ];
+  const cats = [];
+  for (const c of CATS) {
+    const progs = [];
+    try {
+      const r = await fetch(`https://api.github.com/repos/${repo}/contents/${c.id}?ref=main`, { headers: h });
+      if (r.ok) {
+        const fs = await r.json();
+        if (Array.isArray(fs)) for (const f of fs) {
+          if (/\.html?$/i.test(f.name)) progs.push({ file: f.name, title: f.name.replace(/\.html?$/i,'').replace(/[-_.]/g,' ').trim(), path: `${c.id}/${f.name}` });
+        }
+      }
+    } catch {}
+    cats.push({ ...c, programs: progs });
+  }
+  const total = cats.reduce((s,c) => s + c.programs.length, 0);
+  const catalog = JSON.stringify({ categories: cats, totalPrograms: total, updatedAt: new Date().toISOString() });
+  const content = btoa(unescape(encodeURIComponent(catalog)));
+  let sha = null;
+  try { const r = await fetch(`https://api.github.com/repos/${repo}/contents/catalog.json?ref=main`, { headers: h }); if (r.ok) sha = (await r.json()).sha; } catch {}
+  const payload = { message: '🔄 更新目录', content, branch: 'main' };
+  if (sha) payload.sha = sha;
+  await fetch(`https://api.github.com/repos/${repo}/contents/catalog.json`, { method: 'PUT', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+}
+
+async function triggerDeploy(env) {
+  const t = env.CF_API_TOKEN, a = env.CF_ACCOUNT_ID;
+  if (!t || !a) return;
+  await fetch(`https://api.cloudflare.com/client/v4/accounts/${a}/pages/projects/physics-teaching/deployments`, {
+    method: 'POST', headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ branch: 'main' })
+  });
 }
 
 function json(s, b) { return new Response(JSON.stringify(b), { status: s, headers: ct() }); }
