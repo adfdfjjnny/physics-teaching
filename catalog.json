@@ -14,6 +14,11 @@
           "path": "1-li/滚轮线（摆线）.html"
         },
         {
+          "file": "空间螺旋磁聚焦.html",
+          "title": "空间螺旋磁聚焦",
+          "path": "1-li/空间螺旋磁聚焦.html"
+        },
+        {
           "file": "驻波演示.html",
           "title": "驻波演示",
           "path": "1-li/驻波演示.html"
@@ -82,6 +87,6 @@
       "description": "玻尔模型、能级跃迁、原子核等"
     }
   ],
-  "totalPrograms": 2,
-  "updatedAt": "2026-06-27T13:09:35.776Z"
+  "totalPrograms": 3,
+  "updatedAt": "2026-06-27T13:10:50.227Z"
 }
