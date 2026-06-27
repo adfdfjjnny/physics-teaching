@@ -57,14 +57,7 @@ exports.handler = async (event) => {
 
   const { category, filename, content } = body;
 
-  // ----- 密码校验（可选） -----
-  const uploadPassword = process.env.UPLOAD_PASSWORD;
-  if (uploadPassword) {
-    const pw = body.password || '';
-    if (pw !== uploadPassword) {
-      return json(403, { ok: false, error: '上传密码错误' });
-    }
-  }
+  // 上传无需密码
 
   // ----- 参数验证 -----
   if (!category || !VALID_CATEGORIES.includes(category)) {
