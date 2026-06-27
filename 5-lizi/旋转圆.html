@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>带电粒子在匀强磁场中的运动 — 逐次展示轨迹</title>
+<style>
+  :root {
+    --bg: #f5f3ef; --panel-bg: #ffffff; --text: #2c3e50;
+    --accent: #e74c3c; --accent2: #2980b9; --border: #e0dcd5;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Noto Sans SC","Helvetica Neue",sans-serif;
+    background: linear-gradient(135deg,#e8e5df 0%,#f5f3ef 40%,#ebe7e0 100%);
+    color: var(--text); min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; padding: 20px;
+  }
+
+  header { text-align: center; margin-bottom: 14px; }
+  header h1 { font-size: 1.8rem; font-weight: 700; letter-spacing: 0.04em; color: #1a1a1a; margin-bottom: 4px; }
+  header .subtitle { font-size: 0.95rem; color: #666; }
+  .formula-row {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 14px;
+    margin: 8px 0 0; font-size: 0.9rem;
+  }
+  .formula-row span {
+    background: #fff; border: 1px solid var(--border); border-radius: 6px;
+    padding: 3px 10px; font-family: "Cambria Math","Times New Roman",serif;
+    font-style: italic; white-space: nowrap;
+  }
+  .formula-row .hl { color: var(--accent); font-weight: 700; }
+
+  .main-container {
+    display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+    align-items: flex-start; max-width: 1200px; width: 100%;
+  }
+  .canvas-wrapper {
+    background: #fffefc; border-radius: 14px; box-shadow: var(--shadow);
+    padding: 10px; flex-shrink: 0;
+  }
+  canvas { display: block; border-radius: 8px; }
+
+  .side-panel {
+    background: var(--panel-bg); border-radius: 14px; box-shadow: var(--shadow);
+    padding: 20px 22px; width: 280px; flex-shrink: 0;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .side-panel h3 {
+    font-size: 1.05rem; border-bottom: 2px solid #3498db;
+    padding-bottom: 6px; margin-bottom: 0; color: #1a1a1a;
+  }
+
+  .mode-tabs { display: flex; gap: 0; border-radius: 8px; overflow: hidden; }
+  .mode-tab {
+    flex: 1; padding: 8px 0; text-align: center; font-size: 0.85rem;
+    font-weight: 600; cursor: pointer; border: 1.5px solid #3498db;
+    background: #fff; color: #3498db; transition: all 0.2s;
+    font-family: inherit;
+  }
+  .mode-tab:first-child { border-radius: 8px 0 0 8px; }
+  .mode-tab:last-child { border-radius: 0 8px 8px 0; }
+  .mode-tab.active { background: #3498db; color: #fff; }
+
+  .step-controls { display: flex; gap: 8px; align-items: center; }
+  .step-controls button {
+    flex: 1; font-family: inherit; font-size: 0.85rem; font-weight: 600;
+    padding: 8px 10px; border: none; border-radius: 6px; cursor: pointer;
+    transition: all 0.18s;
+  }
+  .btn-prev { background: #ecf0f1; color: #555; }
+  .btn-prev:hover { background: #d5dbdb; }
+  .btn-next { background: #3498db; color: #fff; }
+  .btn-next:hover { background: #2980b9; }
+  .btn-auto {
+    background: #27ae60; color: #fff; font-size: 0.9rem; padding: 9px 16px;
+    border: none; border-radius: 8px; cursor: pointer; font-family: inherit;
+    font-weight: 600; transition: all 0.18s;
+  }
+  .btn-auto:hover { background: #219a52; }
+  .btn-auto.paused { background: #e67e22; }
+  .btn-auto.paused:hover { background: #d35400; }
+
+  .control-group { display: flex; flex-direction: column; gap: 5px; }
+  .control-group label {
+    font-size: 0.84rem; font-weight: 600; color: #555;
+    display: flex; justify-content: space-between;
+  }
+  .control-group input[type=range] { width: 100%; accent-color: #3498db; }
+  .control-group .val { color: #3498db; font-weight: 700; }
+
+  .btn-reset {
+    font-family: inherit; font-size: 0.88rem; font-weight: 600;
+    padding: 8px 14px; border: none; border-radius: 8px; cursor: pointer;
+    background: #ecf0f1; color: #555; transition: all 0.18s;
+  }
+  .btn-reset:hover { background: #d5dbdb; }
+
+  .legend-item {
+    display: flex; align-items: center; gap: 8px; font-size: 0.81rem;
+  }
+  .legend-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+
+  .fact-box {
+    background: #fef9e7; border-left: 4px solid #f1c40f; border-radius: 6px;
+    padding: 10px 12px; font-size: 0.81rem; line-height: 1.55;
+  }
+  .fact-box strong { color: #c0392b; }
+
+  #angleDisplay {
+    text-align: center; font-size: 0.88rem; color: #3498db; font-weight: 700;
+    min-height: 1.3em;
+  }
+
+  footer { margin-top: 12px; font-size: 0.78rem; color: #999; }
+
+  @media (max-width: 900px) {
+    .main-container { flex-direction: column; align-items: center; }
+    .side-panel { width: 100%; max-width: 440px; }
+    canvas { width: 100%; height: auto; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>带电粒子在匀强磁场中的运动轨迹</h1>
+  <p class="subtitle">发射速度顺时针旋转 · 逐次展示各方向粒子的回旋轨迹</p>
+  <div class="formula-row">
+    <span>B ⊗ 垂直纸面向里</span>
+    <span>v = <span class="hl">qBL</span> / m</span>
+    <span>r = mv/(qB) = <span class="hl">L</span></span>
+    <span>T = 2πm/(qB)（恒定）</span>
+  </div>
+</header>
+
+<div class="main-container">
+  <div class="canvas-wrapper">
+    <canvas id="c" width="680" height="680"></canvas>
+  </div>
+
+  <div class="side-panel">
+    <h3>🎯 显示模式</h3>
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tabSeq">逐次展示</button>
+      <button class="mode-tab" id="tabSync">同步动画</button>
+    </div>
+    <div id="angleDisplay">发射方向: 0° (→)</div>
+
+    <div class="step-controls" id="stepControls">
+      <button class="btn-prev" id="btnPrev">◀ 上一步</button>
+      <button class="btn-next" id="btnNext">下一步 ▶</button>
+    </div>
+    <button class="btn-auto" id="btnAuto">⏸ 暂停自动</button>
+
+    <h3>🎚 参数</h3>
+    <div class="control-group">
+      <label>发射方向数 <span class="val" id="vN">12</span></label>
+      <input type="range" id="sliderN" min="4" max="24" value="12" step="1">
+    </div>
+    <div class="control-group">
+      <label>自动速度 <span class="val" id="vSpeed">1.0×</span></label>
+      <input type="range" id="sliderSpeed" min="0.2" max="3" value="1" step="0.1">
+    </div>
+    <div class="control-group">
+      <label>轨迹半径 L <span class="val" id="vL">150 px</span></label>
+      <input type="range" id="sliderL" min="60" max="230" value="150" step="5">
+    </div>
+
+    <button class="btn-reset" id="btnReset">↺ 重新开始</button>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+      <label style="font-size:0.81rem;cursor:pointer;">
+        <input type="checkbox" id="chkCenters" checked> 显示圆心
+      </label>
+      <button class="btn-reset" id="btnEnvelope" style="font-size:0.8rem;padding:5px 10px;">隐藏包络线</button>
+    </div>
+
+    <h3>📐 图例</h3>
+    <div class="legend-item"><span class="legend-dot" style="background:#e74c3c;"></span> 粒子源 P</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#3498db;"></span> 各轨迹圆心 C<sub>θ</sub></div>
+    <div class="legend-item"><span style="color:#e74c3c;font-weight:bold;font-size:1.1rem;">→</span> 发射速度方向（顺时针旋转）</div>
+    <div class="legend-item"><span style="color:#27ae60;font-weight:bold;">●</span> 粒子在轨迹上运动（逆时针）</div>
+    <div class="legend-item"><span style="color:#aaa;font-size:1.1rem;">⊗</span> 磁场 B（垂直纸面向里）</div>
+
+    <div class="fact-box">
+      <strong>💡 关键结论：</strong><br>
+      ① 所有轨迹圆半径相同 = <strong>L</strong><br>
+      ② 所有轨迹圆均<strong>经过 P 点</strong><br>
+      ③ 各方向回旋周期<strong>相同</strong><br>
+      ④ 圆心轨迹：以 P 为圆心、L 为半径的圆<br>
+      ⑤ 粒子可达范围半径 = <strong>2L</strong>
+    </div>
+  </div>
+</div>
+
+<footer>高中物理 · 带电粒子在匀强磁场中的运动 · 交互演示</footer>
+
+<script>
+(function() {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const P = { x: W / 2, y: H / 2 };
+
+  // ── State ───────────────────────────────────────
+  let L = 150;
+  let N = 12;
+  let speed = 1.0;
+  let mode = 'sequential';   // 'sequential' | 'sync'
+  let autoPlay = true;
+  let showCenters = true;
+  let showEnvelope = true;
+
+  let trajectories = [];
+  let arrowAngle = 0;        // cumulative CW angle of emission arrow (rad)
+  let currentIdx = 0;        // which single trajectory is highlighted (sequential mode)
+  let visitedSet = new Set();// indices of trajectories already shown (drawn as dashed)
+  let lastTime = null;
+
+  // ── Palette ─────────────────────────────────────
+  const palette = [
+    '#e6194b','#3cb44b','#ffe119','#4363d8','#f58231','#911eb4',
+    '#42d4f4','#f032e6','#bfef45','#fabed4','#469990','#dcbeff',
+    '#9A6324','#fffac8','#800000','#aaffc3','#808000','#ffd8b1',
+    '#000075','#a9a9a9','#ff6f61','#6b5b95','#88b04b','#f7cac9',
+  ];
+  function clr(i) { return palette[i % palette.length]; }
+
+  // ── Build trajectory data ───────────────────────
+  function buildTrajectories() {
+    const trajs = [];
+    for (let i = 0; i < N; i++) {
+      // theta = emission angle in canvas (y↓): 0=→, π/2=↓, π=←, 3π/2=↑
+      const theta = (2 * Math.PI * i) / N;
+      // Canvas (x→, y↓, z⊗): F_c = qvB·(sinθ, -cosθ) → C = P + L·(sinθ, -cosθ)
+      const cx = P.x + L * Math.sin(theta);
+      const cy = P.y - L * Math.cos(theta);
+      // P-C = L·(-sinθ, cosθ) → cos φ₀=-sinθ, sin φ₀=cosθ → φ₀ = π/2 + θ
+      const phi0 = Math.PI / 2 + theta;
+      trajs.push({ theta, cx, cy, phi0, color: clr(i), index: i });
+    }
+    return trajs;
+  }
+
+  // ── Hash jitter for B-field ─────────────────────
+  function hashJitter(ix, iy, maxJit) {
+    const h = ((ix * 374761393 + iy * 668265263) ^ (ix << 7 ^ iy * 13)) & 0xFFFF;
+    return ((h / 0xFFFF) - 0.5) * 2 * maxJit;
+  }
+
+  // ── Draw helpers ────────────────────────────────
+  function drawBField() {
+    const spacing = 42, jitter = 6;
+    ctx.save();
+    ctx.globalAlpha = 0.14;
+    ctx.font = '15px "Times New Roman",serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#555';
+    let ix = 0;
+    for (let x = spacing; x < W; x += spacing, ix++) {
+      let iy = 0;
+      for (let y = spacing; y < H; y += spacing, iy++) {
+        const dx = x - P.x, dy = y - P.y;
+        if (Math.abs(dx) < 30 && Math.abs(dy) < 30) continue;
+        ctx.fillText('⊗', x + hashJitter(ix, iy, jitter), y + hashJitter(iy, ix, jitter));
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawTrajectoryCircle(t, alpha, lw, dash) {
+    ctx.save();
+    ctx.strokeStyle = t.color;
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth = lw;
+    if (dash) ctx.setLineDash([6, 4]); else ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.arc(t.cx, t.cy, L, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  function drawCenter(t, alpha) {
+    if (!showCenters) return;
+    ctx.save();
+    ctx.fillStyle = t.color;
+    ctx.globalAlpha = alpha || 0.75;
+    ctx.beginPath(); ctx.arc(t.cx, t.cy, 4, 0, 2 * Math.PI); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 0.5; ctx.stroke();
+    ctx.strokeStyle = t.color; ctx.globalAlpha = (alpha || 0.75) * 0.6; ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(t.cx - 6, t.cy); ctx.lineTo(t.cx + 6, t.cy);
+    ctx.moveTo(t.cx, t.cy - 6); ctx.lineTo(t.cx, t.cy + 6);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawSource() {
+    ctx.save();
+    const g = ctx.createRadialGradient(P.x, P.y, 0, P.x, P.y, 22);
+    g.addColorStop(0, 'rgba(231,76,60,0.55)');
+    g.addColorStop(0.5, 'rgba(231,76,60,0.15)');
+    g.addColorStop(1, 'rgba(231,76,60,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(P.x, P.y, 22, 0, 2 * Math.PI); ctx.fill();
+    ctx.fillStyle = '#e74c3c';
+    ctx.beginPath(); ctx.arc(P.x, P.y, 7, 0, 2 * Math.PI); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.arc(P.x, P.y, 9, 0, 2 * Math.PI); ctx.stroke();
+    ctx.fillStyle = '#1a1a1a';
+    ctx.font = 'bold 15px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.fillText('P', P.x + 13, P.y - 6);
+    ctx.restore();
+  }
+
+  // ── Draw emission velocity arrow at P ────────────
+  function drawEmissionArrow(angle, alpha) {
+    // angle in canvas convention, increasing = CW
+    const arrowLen = 48;
+    const x2 = P.x + arrowLen * Math.cos(angle);
+    const y2 = P.y + arrowLen * Math.sin(angle);
+
+    ctx.save();
+    ctx.globalAlpha = alpha || 0.9;
+
+    // Shaft
+    ctx.strokeStyle = '#e74c3c';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(P.x, P.y);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+
+    // Arrowhead
+    const headLen = 14, headAng = 0.45;
+    ctx.fillStyle = '#e74c3c';
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(
+      x2 - headLen * Math.cos(angle - headAng),
+      y2 - headLen * Math.sin(angle - headAng)
+    );
+    ctx.lineTo(
+      x2 - headLen * Math.cos(angle + headAng),
+      y2 - headLen * Math.sin(angle + headAng)
+    );
+    ctx.closePath();
+    ctx.fill();
+
+    // Label
+    const labelR = arrowLen + 20;
+    const lx = P.x + labelR * Math.cos(angle);
+    const ly = P.y + labelR * Math.sin(angle);
+    ctx.fillStyle = '#c0392b';
+    ctx.font = 'bold 13px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('v', lx, ly);
+
+    ctx.restore();
+  }
+
+  // ── Draw all particles (sync mode) ──────────────
+  function drawSyncParticles() {
+    for (const t of trajectories) {
+      const phi = t.phi0 - arrowAngle;  // arrowAngle doubles as tGlobal in sync mode
+      const px = t.cx + L * Math.cos(phi);
+      const py = t.cy + L * Math.sin(phi);
+
+      // Velocity arrow
+      const vAngle = phi - Math.PI / 2;
+      const vLen = 24;
+      const vx = px + vLen * Math.cos(vAngle);
+      const vy = py + vLen * Math.sin(vAngle);
+
+      ctx.save();
+      ctx.strokeStyle = t.color;
+      ctx.globalAlpha = 0.7;
+      ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(vx, vy); ctx.stroke();
+      // small arrowhead
+      const hl = 7, ha = 0.5;
+      ctx.fillStyle = t.color;
+      ctx.beginPath();
+      ctx.moveTo(vx, vy);
+      ctx.lineTo(vx - hl * Math.cos(vAngle - ha), vy - hl * Math.sin(vAngle - ha));
+      ctx.lineTo(vx - hl * Math.cos(vAngle + ha), vy - hl * Math.sin(vAngle + ha));
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+
+      // Particle dot
+      ctx.save();
+      const g = ctx.createRadialGradient(px, py, 0, px, py, 8);
+      g.addColorStop(0, 'rgba(255,255,255,0.9)');
+      g.addColorStop(0.45, t.color);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(px, py, 8, 0, 2 * Math.PI); ctx.fill();
+      ctx.fillStyle = t.color;
+      ctx.beginPath(); ctx.arc(px, py, 3.8, 0, 2 * Math.PI); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  // ── Envelope circle ─────────────────────────────
+  function drawEnvelope() {
+    if (!showEnvelope) return;
+    ctx.save();
+    ctx.strokeStyle = '#e74c3c';
+    ctx.globalAlpha = 0.3;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([10, 6]);
+    ctx.beginPath(); ctx.arc(P.x, P.y, 2 * L, 0, 2 * Math.PI); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#c0392b';
+    ctx.font = 'italic 13px "Cambria Math","Times New Roman",serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('2L', P.x, P.y - 2 * L - 7);
+    ctx.restore();
+  }
+
+  // ── Draw centers-of-centers circle ──────────────
+  function drawCenterLocus() {
+    // All centers lie on a circle of radius L around P (shown subtly in sequential mode)
+    if (!showCenters) return;
+    ctx.save();
+    ctx.strokeStyle = '#3498db';
+    ctx.globalAlpha = 0.12;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 5]);
+    ctx.beginPath(); ctx.arc(P.x, P.y, L, 0, 2 * Math.PI); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  // ── Main draw ───────────────────────────────────
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Grid
+    ctx.save();
+    ctx.strokeStyle = '#e8e4dc'; ctx.lineWidth = 0.4;
+    for (let x = 40; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+    for (let y = 40; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    ctx.restore();
+
+    drawBField();
+    drawEnvelope();
+    drawCenterLocus();
+
+    if (mode === 'sequential') {
+      // Draw previously visited trajectories as dashed ghost circles
+      for (const idx of visitedSet) {
+        if (idx === currentIdx) continue; // skip current, drawn separately
+        const vt = trajectories[idx];
+        drawTrajectoryCircle(vt, 0.42, 1.4, true);
+        drawCenter(vt, 0.5);
+      }
+
+      // Draw current trajectory — solid, highlighted
+      const t = trajectories[currentIdx];
+      drawTrajectoryCircle(t, 0.85, 2.6, false);
+      drawCenter(t, 1);
+      // Trace particle along the current trajectory
+      const traceProgress = (arrowAngle % (2 * Math.PI / N)) / (2 * Math.PI / N);
+      const phi = t.phi0 - traceProgress * Math.PI * 0.75;
+      const px = t.cx + L * Math.cos(phi);
+      const py = t.cy + L * Math.sin(phi);
+      ctx.save();
+      const g = ctx.createRadialGradient(px, py, 0, px, py, 10);
+      g.addColorStop(0, 'rgba(255,255,255,0.95)');
+      g.addColorStop(0.4, t.color);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(px, py, 10, 0, 2 * Math.PI); ctx.fill();
+      ctx.fillStyle = t.color;
+      ctx.beginPath(); ctx.arc(px, py, 5, 0, 2 * Math.PI); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+      // Velocity arrow on the particle
+      const vAngle = phi - Math.PI / 2;
+      const vLen = 26;
+      const vx = px + vLen * Math.cos(vAngle);
+      const vy = py + vLen * Math.sin(vAngle);
+      ctx.strokeStyle = t.color; ctx.lineWidth = 2.2; ctx.globalAlpha = 0.8;
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(vx, vy); ctx.stroke();
+      const hl = 8, ha = 0.5;
+      ctx.fillStyle = t.color;
+      ctx.beginPath();
+      ctx.moveTo(vx, vy);
+      ctx.lineTo(vx - hl * Math.cos(vAngle - ha), vy - hl * Math.sin(vAngle - ha));
+      ctx.lineTo(vx - hl * Math.cos(vAngle + ha), vy - hl * Math.sin(vAngle + ha));
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+
+      // Emission arrow: only visible when aligned with current trajectory's tangent
+      const arrowNorm = arrowAngle % (2 * Math.PI);
+      const curTheta = trajectories[currentIdx].theta;
+      let dist = Math.abs(arrowNorm - curTheta);
+      if (dist > Math.PI) dist = 2 * Math.PI - dist;
+      const halfSector = Math.PI / N;
+      const proximity = Math.max(0, 1 - dist / halfSector);
+      if (proximity > 0.01) {
+        drawEmissionArrow(curTheta, proximity * 0.9);
+      }
+    } else {
+      // Sync mode: all trajectories + particles
+      for (const t of trajectories) {
+        drawTrajectoryCircle(t, 0.5, 1.5, true);
+        drawCenter(t, 0.65);
+      }
+      drawSyncParticles();
+      // Static emission arrows at P — one per direction, each tangent to its circle
+      for (const t of trajectories) {
+        const aLen = 32;
+        const ex = P.x + aLen * Math.cos(t.theta);
+        const ey = P.y + aLen * Math.sin(t.theta);
+        ctx.save();
+        ctx.globalAlpha = 0.45;
+        ctx.strokeStyle = t.color;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(P.x, P.y); ctx.lineTo(ex, ey); ctx.stroke();
+        // tiny arrowhead
+        const hl = 5, ha = 0.5;
+        ctx.fillStyle = t.color;
+        ctx.beginPath();
+        ctx.moveTo(ex, ey);
+        ctx.lineTo(ex - hl * Math.cos(t.theta - ha), ey - hl * Math.sin(t.theta - ha));
+        ctx.lineTo(ex - hl * Math.cos(t.theta + ha), ey - hl * Math.sin(t.theta + ha));
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    drawSource();
+
+    // CCW indicator (motion direction)
+    ctx.save();
+    ctx.fillStyle = '#555';
+    ctx.font = '12px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('粒子回旋: 逆时针', W - 14, H - 18);
+    ctx.textAlign = 'left';
+    ctx.fillText('发射速度: 顺时针旋转', 14, H - 18);
+    // CW arc
+    ctx.strokeStyle = '#e74c3c';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(P.x + L + 30, P.y - L - 10, 20, -Math.PI/2, Math.PI/2 - 0.15, false);
+    ctx.stroke();
+    const ax = P.x + L + 30 + 20 * Math.cos(Math.PI/2 - 0.15);
+    const ay = P.y - L - 10 + 20 * Math.sin(Math.PI/2 - 0.15);
+    ctx.fillStyle = '#e74c3c';
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(ax - 5, ay - 4); ctx.lineTo(ax - 5, ay + 4);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#e74c3c';
+    ctx.font = '11px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('发射方向', P.x + L + 30, P.y - L - 34);
+    ctx.restore();
+  }
+
+  // ── Map arrowAngle to current trajectory index ──
+  function updateCurrentFromAngle() {
+    const angleStep = (2 * Math.PI) / N;
+    const raw = Math.floor(arrowAngle / angleStep);
+    const idx = ((raw % N) + N) % N;
+    if (idx !== currentIdx) {
+      visitedSet.add(currentIdx); // keep old one as dashed
+    }
+    currentIdx = idx;
+    updateAngleDisplay();
+  }
+
+  function updateAngleDisplay() {
+    const t = trajectories[currentIdx];
+    const deg = (t.theta * 180 / Math.PI).toFixed(0);
+    const dirs = ['→','↘','↓','↙','←','↖','↑','↗'];
+    const di = Math.round(t.theta / (Math.PI / 4)) % 8;
+    document.getElementById('angleDisplay').textContent =
+      '轨迹 ' + (currentIdx + 1) + '/' + N + '  发射角: ' + deg + '° ' + dirs[di];
+  }
+
+  // ── Animation ───────────────────────────────────
+  const omega0 = 1.8;  // rad/s base
+
+  function animate(timestamp) {
+    if (!lastTime) lastTime = timestamp;
+    let dt = (timestamp - lastTime) / 1000;
+    if (dt > 0.1) dt = 0.1;
+    lastTime = timestamp;
+
+    if (autoPlay) {
+      const dAngle = omega0 * speed * dt;
+      arrowAngle += dAngle;
+      if (mode === 'sequential') {
+        updateCurrentFromAngle();
+      }
+    }
+
+    draw();
+    requestAnimationFrame(animate);
+  }
+
+  // ── Step forward / backward ─────────────────────
+  function stepForward() {
+    if (mode !== 'sequential') return;
+    visitedSet.add(currentIdx); // current becomes dashed
+    currentIdx = (currentIdx + 1) % N;
+    visitedSet.delete(currentIdx); // new current is no longer dashed
+    const rot = Math.floor(arrowAngle / (2 * Math.PI));
+    arrowAngle = rot * (2 * Math.PI) + trajectories[currentIdx].theta;
+    if (arrowAngle < trajectories[currentIdx].theta) arrowAngle = trajectories[currentIdx].theta;
+    updateAngleDisplay();
+  }
+
+  function stepBackward() {
+    if (mode !== 'sequential') return;
+    visitedSet.delete(currentIdx); // this one is no longer visited
+    currentIdx = ((currentIdx - 1) % N + N) % N;
+    // Remove the new current from visited (it was just added when we stepped forward past it)
+    visitedSet.delete(currentIdx);
+    const rot = Math.floor(arrowAngle / (2 * Math.PI));
+    arrowAngle = rot * (2 * Math.PI) + trajectories[currentIdx].theta;
+    if (arrowAngle < 0) arrowAngle = trajectories[currentIdx].theta;
+    updateAngleDisplay();
+  }
+
+  // ── Rebuild ─────────────────────────────────────
+  function rebuild() {
+    trajectories = buildTrajectories();
+    arrowAngle = 0;
+    currentIdx = 0;
+    visitedSet = new Set();
+    updateAngleDisplay();
+  }
+
+  // ── Event bindings ──────────────────────────────
+  document.getElementById('tabSeq').addEventListener('click', function() {
+    mode = 'sequential';
+    this.classList.add('active');
+    document.getElementById('tabSync').classList.remove('active');
+    document.getElementById('stepControls').style.display = 'flex';
+    rebuild();
+  });
+  document.getElementById('tabSync').addEventListener('click', function() {
+    mode = 'sync';
+    this.classList.add('active');
+    document.getElementById('tabSeq').classList.remove('active');
+    document.getElementById('stepControls').style.display = 'none';
+  });
+
+  document.getElementById('btnAuto').addEventListener('click', function() {
+    autoPlay = !autoPlay;
+    this.textContent = autoPlay ? '⏸ 暂停自动' : '▶ 自动播放';
+    if (autoPlay) this.classList.remove('paused');
+    else this.classList.add('paused');
+  });
+
+  document.getElementById('btnNext').addEventListener('click', stepForward);
+  document.getElementById('btnPrev').addEventListener('click', stepBackward);
+
+  document.getElementById('btnReset').addEventListener('click', function() {
+    arrowAngle = 0;
+    currentIdx = 0;
+    visitedSet = new Set();
+    updateAngleDisplay();
+  });
+
+  document.getElementById('sliderN').addEventListener('input', function() {
+    N = parseInt(this.value);
+    document.getElementById('vN').textContent = N;
+    rebuild();
+  });
+  document.getElementById('sliderSpeed').addEventListener('input', function() {
+    speed = parseFloat(this.value);
+    document.getElementById('vSpeed').textContent = speed.toFixed(1) + '×';
+  });
+  document.getElementById('sliderL').addEventListener('input', function() {
+    L = parseInt(this.value);
+    document.getElementById('vL').textContent = L + ' px';
+    const maxL = Math.min(W, H) / 2 - 25;
+    if (L > maxL) { L = maxL; this.value = L; document.getElementById('vL').textContent = L + ' px'; }
+    rebuild();
+  });
+
+  document.getElementById('chkCenters').addEventListener('change', function() {
+    showCenters = this.checked;
+  });
+  const btnEnvelope = document.getElementById('btnEnvelope');
+  btnEnvelope.addEventListener('click', function() {
+    showEnvelope = !showEnvelope;
+    this.textContent = showEnvelope ? '隐藏包络线' : '显示包络线';
+  });
+
+  // ── Keyboard ────────────────────────────────────
+  document.addEventListener('keydown', function(e) {
+    switch (e.key) {
+      case ' ': e.preventDefault();
+        document.getElementById('btnAuto').click(); break;
+      case 'ArrowRight': e.preventDefault(); stepForward(); break;
+      case 'ArrowLeft': e.preventDefault(); stepBackward(); break;
+      case 'r': rebuild(); break;
+      case 'c': showCenters = !showCenters;
+        document.getElementById('chkCenters').checked = showCenters; break;
+      case 'e': showEnvelope = !showEnvelope;
+        btnEnvelope.textContent = showEnvelope ? '隐藏包络线' : '显示包络线'; break;
+      case '1': mode = 'sequential';
+        document.getElementById('tabSeq').classList.add('active');
+        document.getElementById('tabSync').classList.remove('active');
+        document.getElementById('stepControls').style.display = 'flex';
+        rebuild(); break;
+      case '2': mode = 'sync';
+        document.getElementById('tabSync').classList.add('active');
+        document.getElementById('tabSeq').classList.remove('active');
+        document.getElementById('stepControls').style.display = 'none'; break;
+    }
+  });
+
+  // ── Start ───────────────────────────────────────
+  rebuild();
+  requestAnimationFrame(animate);
+})();
+</script>
+
+</body>
+</html>
