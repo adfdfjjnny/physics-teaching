@@ -124,6 +124,41 @@
   </div>
 
   <!-- ======================================== -->
+  <!-- 移动弹窗                                  -->
+  <!-- ======================================== -->
+  <div class="modal-overlay" id="moveModal" style="display:none;">
+    <div class="modal-panel modal-panel-sm">
+      <div class="modal-header">
+        <h2>📦 移动到其他板块</h2>
+        <button class="modal-close" id="btnCloseMove">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="delete-warning">移动 <strong id="moveFileName"></strong></p>
+        <label class="form-label">目标板块</label>
+        <select class="form-select" id="moveTargetCat">
+          <option value="1-li">🍎 力 — 力学</option>
+          <option value="2-re">🔥 热 — 热学</option>
+          <option value="3-dianlu">⚡ 电路</option>
+          <option value="4-dianci">🧲 电磁感应</option>
+          <option value="5-lizi">⚛️ 带电粒子在磁场中运动</option>
+          <option value="6-guang">💡 光 — 光学</option>
+          <option value="7-yuan">🔬 原 — 原子物理</option>
+        </select>
+        <div id="movePasswordField">
+          <label class="form-label">管理员密码</label>
+          <input type="password" class="form-input" id="movePassword"
+                 placeholder="请输入管理员密码" autocomplete="off">
+        </div>
+        <div class="delete-actions">
+          <button class="btn-cancel" id="btnCancelMove">取消</button>
+          <button class="btn-danger" id="btnConfirmMove">确认移动</button>
+        </div>
+        <div class="upload-status" id="moveStatus" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================== -->
   <!-- 上传弹窗                                  -->
   <!-- ======================================== -->
   <div class="modal-overlay" id="uploadModal" style="display:none;">
@@ -290,6 +325,7 @@
                 ${cat.emoji} ${cat.name}
               </span>
               <div class="card-footer">
+                <button class="btn-move" title="移动到其他板块" data-action="move">📦</button>
                 <button class="btn-delete" title="删除此程序" data-action="delete">🗑</button>
                 <button class="btn-download" title="下载此程序" data-action="download">💾</button>
                 <span class="card-arrow">打开 →</span>
@@ -543,6 +579,13 @@
           try { downloadTarget = JSON.parse(card.dataset.program); } catch { return; }
           downloadFile();
         }
+
+        if (btn.dataset.action === 'move') {
+          const card = btn.closest('.card');
+          if (!card) return;
+          try { moveTarget = JSON.parse(card.dataset.program); } catch { return; }
+          openMoveModal();
+        }
       });
 
       async function checkDeletePasswordRequired() {
@@ -687,6 +730,65 @@
       }
 
             // ========================================
+      // 移动功能
+      // ========================================
+      const moveModal = document.getElementById('moveModal');
+      let moveTarget = null;
+
+      function openMoveModal() {
+        if (!moveTarget) return;
+        document.getElementById('moveFileName').textContent = moveTarget.filename;
+        document.getElementById('moveTargetCat').value = moveTarget.category;
+        document.getElementById('movePassword').value = '';
+        document.getElementById('moveStatus').style.display = 'none';
+        document.getElementById('btnConfirmMove').disabled = false;
+        moveModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+
+      document.getElementById('btnCloseMove').addEventListener('click', closeMoveModal);
+      document.getElementById('btnCancelMove').addEventListener('click', closeMoveModal);
+      moveModal.addEventListener('click', (e) => { if (e.target === moveModal) closeMoveModal(); });
+
+      function closeMoveModal() {
+        moveModal.style.display = 'none';
+        document.body.style.overflow = '';
+        moveTarget = null;
+      }
+
+      document.getElementById('btnConfirmMove').addEventListener('click', async () => {
+        if (!moveTarget) return;
+        const toCategory = document.getElementById('moveTargetCat').value;
+        const password = document.getElementById('movePassword').value;
+        const btn = document.getElementById('btnConfirmMove');
+        const status = document.getElementById('moveStatus');
+        btn.disabled = true; btn.textContent = '移动中...';
+        status.style.display = 'block';
+        status.className = 'upload-status status-info';
+        status.textContent = '⏳ 正在移动...';
+
+        try {
+          const body = { fromCategory: moveTarget.category, toCategory, filename: moveTarget.filename };
+          if (password) body.password = password;
+          const resp = await fetch('/move', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          const data = await resp.json();
+          if (data.ok) {
+            status.className = 'upload-status status-success';
+            status.textContent = '✅ ' + data.message;
+            setTimeout(() => { closeMoveModal(); showToast('程序已移动，稍后刷新即可看到'); }, 2000);
+          } else {
+            status.className = 'upload-status status-error';
+            status.textContent = '❌ ' + (data.error || '失败');
+            btn.disabled = false; btn.textContent = '确认移动';
+          }
+        } catch (err) {
+          status.className = 'upload-status status-error';
+          status.textContent = '❌ 网络错误';
+          btn.disabled = false; btn.textContent = '确认移动';
+        }
+      });
+
+      // ========================================
       // 审批管理
       // ========================================
       const approveModal = document.getElementById('approveModal');
@@ -872,6 +974,7 @@
           if (modal.style.display === 'flex') closeModal();
           if (deleteModal.style.display === 'flex') closeDeleteModal();
           if (approveModal.style.display === 'flex') closeApproveModal();
+          if (moveModal.style.display === 'flex') closeMoveModal();
         }
       });
       document.addEventListener('keydown', (e) => {
