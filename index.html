@@ -259,6 +259,7 @@
               </div>
             </a>
             <button class="btn-delete" title="删除此程序" data-action="delete">🗑</button>
+            <button class="btn-download" title="下载此程序" data-action="download">💾</button>
           </div>
         `;
       }
@@ -492,27 +493,34 @@
       const deleteStatus = document.getElementById('deleteStatus');
       let deleteTarget = null;
 
-      // 委托模式：监听所有卡片上的删除按钮点击
+      // 委托模式：监听所有卡片上的按钮点击
       document.getElementById('cardGrid').addEventListener('click', (e) => {
-        const btn = e.target.closest('[data-action="delete"]');
+        const btn = e.target.closest('[data-action]');
         if (!btn) return;
         e.preventDefault();
         e.stopPropagation();
-        const card = btn.closest('.card');
-        if (!card) return;
-        try {
-          deleteTarget = JSON.parse(card.dataset.program);
-        } catch { return; }
-        deleteFileName.textContent = deleteTarget.filename;
-        deleteStatus.style.display = 'none';
-        deleteStatus.className = 'upload-status';
-        deletePasswordField.style.display = 'none';
-        document.getElementById('deletePassword').value = '';
-        document.getElementById('btnConfirmDelete').disabled = false;
-        deleteModal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-        // 检查是否需要密码
-        checkDeletePasswordRequired();
+
+        if (btn.dataset.action === 'delete') {
+          const card = btn.closest('.card');
+          if (!card) return;
+          try { deleteTarget = JSON.parse(card.dataset.program); } catch { return; }
+          deleteFileName.textContent = deleteTarget.filename;
+          deleteStatus.style.display = 'none';
+          deleteStatus.className = 'upload-status';
+          deletePasswordField.style.display = 'none';
+          document.getElementById('deletePassword').value = '';
+          document.getElementById('btnConfirmDelete').disabled = false;
+          deleteModal.style.display = 'flex';
+          document.body.style.overflow = 'hidden';
+          checkDeletePasswordRequired();
+        }
+
+        if (btn.dataset.action === 'download') {
+          const card = btn.closest('.card');
+          if (!card) return;
+          try { downloadTarget = JSON.parse(card.dataset.program); } catch { return; }
+          downloadFile();
+        }
       });
 
       async function checkDeletePasswordRequired() {
@@ -585,6 +593,60 @@
           btn.textContent = '确认删除';
         }
       });
+
+      // ========================================
+      // 下载功能
+      // ========================================
+      let downloadTarget = null;
+
+      async function downloadFile() {
+        if (!downloadTarget) return;
+        const path = downloadTarget.category + '/' + downloadTarget.filename;
+
+        // 检查是否需要密码
+        let needPwd = false;
+        try {
+          const check = await fetch('/.netlify/functions/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category: '1-li', filename: '_x_.html', content: '' })
+          });
+          needPwd = (check.status === 403);
+        } catch {}
+
+        if (needPwd) {
+          const pw = prompt('请输入管理员密码以下载：' + downloadTarget.filename);
+          if (!pw) return;
+          // 简单验证：尝试调用 upload 函数验证密码
+          const verify = await fetch('/.netlify/functions/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category: '1-li', filename: '_x_.html', content: '', password: pw })
+          });
+          if (verify.status === 403) {
+            alert('密码错误！');
+            return;
+          }
+        }
+
+        // 触发下载
+        try {
+          const resp = await fetch(path);
+          if (!resp.ok) throw new Error('文件获取失败');
+          const blob = await resp.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = downloadTarget.filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showToast('✅ 下载完成：' + downloadTarget.filename);
+        } catch (err) {
+          alert('下载失败：' + err.message);
+        }
+      }
 
             // ESC 关闭弹窗
       document.addEventListener('keydown', (e) => {
