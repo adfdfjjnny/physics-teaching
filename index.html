@@ -127,13 +127,6 @@
           <span class="file-preview-size" id="filePreviewSize"></span>
         </div>
 
-        <!-- 上传密码（如果配置了） -->
-        <div id="passwordField" style="display:none;">
-          <label class="form-label">上传密码</label>
-          <input type="password" class="form-input" id="uploadPassword"
-                 placeholder="请输入上传密码" autocomplete="off">
-        </div>
-
         <!-- 上传状态提示 -->
         <div class="upload-status" id="uploadStatus" style="display:none;"></div>
 
@@ -284,33 +277,13 @@
       const btnSubmitText = document.getElementById('btnSubmitText');
       const uploadSpinner = document.getElementById('uploadSpinner');
       const uploadStatus = document.getElementById('uploadStatus');
-      const passwordField = document.getElementById('passwordField');
       let selectedFile = null;
-
-      // 检查是否需要上传密码
-      async function checkPasswordRequired() {
-        try {
-          const resp = await fetch('/.netlify/functions/upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ category: '1-li', filename: '_check.html', content: '' })
-          });
-          const data = await resp.json();
-          // 403 表示需要密码
-          if (resp.status === 403 && data.error === '上传密码错误') {
-            passwordField.style.display = 'block';
-          }
-        } catch {
-          // 本地环境，忽略
-        }
-      }
 
       // 打开弹窗
       document.getElementById('btnOpenUpload').addEventListener('click', () => {
         resetUploadForm();
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
-        checkPasswordRequired();
       });
 
       // 关闭弹窗
@@ -337,7 +310,7 @@
         uploadStatus.textContent = '';
         btnSubmitText.textContent = '上传到服务器';
         uploadSpinner.style.display = 'none';
-        document.getElementById('uploadPassword').value = '';
+        // upload no longer needs password
       }
 
       // 文件选择：click
@@ -396,7 +369,6 @@
         if (!selectedFile) return;
 
         const category = document.getElementById('uploadCategory').value;
-        const password = document.getElementById('uploadPassword').value;
 
         // 显示加载状态
         btnSubmit.disabled = true;
@@ -418,7 +390,6 @@
             filename: selectedFile.name,
             content: base64
           };
-          if (password) body.password = password;
 
           const resp = await fetch('/.netlify/functions/upload', {
             method: 'POST',
@@ -603,13 +574,13 @@
         if (!downloadTarget) return;
         const path = downloadTarget.category + '/' + downloadTarget.filename;
 
-        // 检查是否需要密码
+        // 检查是否需要管理员密码
         let needPwd = false;
         try {
-          const check = await fetch('/.netlify/functions/upload', {
+          const check = await fetch('/.netlify/functions/delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ category: '1-li', filename: '_x_.html', content: '' })
+            body: JSON.stringify({ category: '1-li', filename: '_x_.html' })
           });
           needPwd = (check.status === 403);
         } catch {}
@@ -617,11 +588,10 @@
         if (needPwd) {
           const pw = prompt('请输入管理员密码以下载：' + downloadTarget.filename);
           if (!pw) return;
-          // 简单验证：尝试调用 upload 函数验证密码
-          const verify = await fetch('/.netlify/functions/upload', {
+          const verify = await fetch('/.netlify/functions/delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ category: '1-li', filename: '_x_.html', content: '', password: pw })
+            body: JSON.stringify({ category: '1-li', filename: '_x_.html', password: pw })
           });
           if (verify.status === 403) {
             alert('密码错误！');
