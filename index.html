@@ -19,10 +19,17 @@
           </h1>
           <p class="site-subtitle">交互式物理模拟 · 课堂演示专用</p>
         </div>
-        <button class="btn-upload" id="btnOpenUpload" title="上传新的教学程序">
-          <span class="btn-upload-icon">📤</span>
-          上传程序
-        </button>
+        <div class="header-buttons">
+          <button class="btn-upload" id="btnOpenUpload" title="上传新的教学程序">
+            <span class="btn-upload-icon">📤</span>
+            上传程序
+          </button>
+          <button class="btn-approve" id="btnOpenApprove" title="审批管理">
+            <span class="btn-upload-icon">📋</span>
+            审批管理
+            <span class="pending-badge" id="pendingBadge" style="display:none;">0</span>
+          </button>
+        </div>
       </div>
     </div>
   </header>
@@ -82,6 +89,36 @@
         </div>
 
         <div class="upload-status" id="deleteStatus" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================== -->
+  <!-- 审批管理弹窗                                -->
+  <!-- ======================================== -->
+  <div class="modal-overlay" id="approveModal" style="display:none;">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h2>📋 审批管理</h2>
+        <button class="modal-close" id="btnCloseApprove">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="approveLogin">
+          <label class="form-label">管理员密码</label>
+          <input type="password" class="form-input" id="approvePassword"
+                 placeholder="请输入管理员密码" autocomplete="off">
+          <button class="btn-submit" id="btnApproveLogin">验证进入</button>
+        </div>
+
+        <div id="approveList" style="display:none;">
+          <p class="approve-count" id="approveCount"></p>
+          <div id="pendingList" class="pending-list"></div>
+          <div class="approve-empty" id="approveEmpty" style="display:none;">
+            ✅ 没有待审批的程序
+          </div>
+        </div>
+
+        <div class="upload-status" id="approveStatus" style="display:none;"></div>
       </div>
     </div>
   </div>
@@ -618,11 +655,192 @@
         }
       }
 
-            // ESC 关闭弹窗
+            // ========================================
+      // 审批管理
+      // ========================================
+      const approveModal = document.getElementById('approveModal');
+      const approveStatus = document.getElementById('approveStatus');
+      let approvePassword = '';
+
+      // 打开审批弹窗
+      document.getElementById('btnOpenApprove').addEventListener('click', () => {
+        document.getElementById('approveLogin').style.display = 'block';
+        document.getElementById('approveList').style.display = 'none';
+        document.getElementById('approvePassword').value = '';
+        approveStatus.style.display = 'none';
+        approveModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      });
+
+      document.getElementById('btnCloseApprove').addEventListener('click', closeApproveModal);
+      approveModal.addEventListener('click', (e) => {
+        if (e.target === approveModal) closeApproveModal();
+      });
+
+      function closeApproveModal() {
+        approveModal.style.display = 'none';
+        document.body.style.overflow = '';
+        approvePassword = '';
+      }
+
+      // 验证密码并加载待审列表
+      document.getElementById('btnApproveLogin').addEventListener('click', async () => {
+        approvePassword = document.getElementById('approvePassword').value;
+        if (!approvePassword) { alert('请输入管理员密码'); return; }
+
+        approveStatus.style.display = 'block';
+        approveStatus.className = 'upload-status status-info';
+        approveStatus.textContent = '⏳ 加载中...';
+
+        try {
+          const resp = await fetch('/.netlify/functions/list-pending');
+          const data = await resp.json();
+
+          document.getElementById('approveLogin').style.display = 'none';
+          document.getElementById('approveList').style.display = 'block';
+          approveStatus.style.display = 'none';
+
+          renderPendingList(data.items || []);
+        } catch (err) {
+          approveStatus.className = 'upload-status status-error';
+          approveStatus.textContent = '❌ 加载失败: ' + err.message;
+        }
+      });
+
+      function renderPendingList(items) {
+        const list = document.getElementById('pendingList');
+        const empty = document.getElementById('approveEmpty');
+        const count = document.getElementById('approveCount');
+
+        count.textContent = '待审批：' + items.length + ' 个程序';
+
+        if (items.length === 0) {
+          list.innerHTML = '';
+          empty.style.display = 'block';
+        } else {
+          empty.style.display = 'none';
+          list.innerHTML = items.map(item => `
+            <div class="pending-item">
+              <div class="pending-info">
+                <span class="pending-cat">${getCatEmoji(item.category)} ${item.category}</span>
+                <strong>${escapeHtml(item.title)}</strong>
+                <span class="pending-file">${escapeHtml(item.filename)}</span>
+              </div>
+              <div class="pending-actions">
+                <button class="btn-approve-item" data-action="approve"
+                        data-cat="${item.category}" data-file="${escapeHtml(item.filename)}">✅ 通过</button>
+                <button class="btn-reject-item" data-action="reject"
+                        data-cat="${item.category}" data-file="${escapeHtml(item.filename)}">❌ 拒绝</button>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        // 绑定审批按钮
+        list.querySelectorAll('[data-action="approve"]').forEach(btn => {
+          btn.addEventListener('click', () => handleApprove(btn.dataset.cat, btn.dataset.file));
+        });
+        list.querySelectorAll('[data-action="reject"]').forEach(btn => {
+          btn.addEventListener('click', () => handleReject(btn.dataset.cat, btn.dataset.file));
+        });
+      }
+
+      function getCatEmoji(id) {
+        const map = { '1-li':'🍎','2-re':'🔥','3-dianlu':'⚡','4-dianci':'🧲','5-lizi':'⚛️','6-guang':'💡','7-yuan':'🔬' };
+        return map[id] || '📄';
+      }
+
+      async function handleApprove(category, filename) {
+        if (!confirm('确定通过「' + filename + '」？')) return;
+        approveStatus.style.display = 'block';
+        approveStatus.className = 'upload-status status-info';
+        approveStatus.textContent = '⏳ 审批中...';
+
+        try {
+          const resp = await fetch('/.netlify/functions/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category, filename, password: approvePassword })
+          });
+          const data = await resp.json();
+          if (data.ok) {
+            approveStatus.className = 'upload-status status-success';
+            approveStatus.textContent = '✅ ' + data.message;
+            // 刷新列表
+            setTimeout(async () => {
+              const r = await fetch('/.netlify/functions/list-pending');
+              renderPendingList((await r.json()).items || []);
+              approveStatus.style.display = 'none';
+              loadPendingCount();
+            }, 1000);
+          } else {
+            approveStatus.className = 'upload-status status-error';
+            approveStatus.textContent = '❌ ' + (data.error || '失败');
+          }
+        } catch (err) {
+          approveStatus.className = 'upload-status status-error';
+          approveStatus.textContent = '❌ 网络错误';
+        }
+      }
+
+      async function handleReject(category, filename) {
+        if (!confirm('确定拒绝「' + filename + '」？此操作不可撤销。')) return;
+        approveStatus.style.display = 'block';
+        approveStatus.className = 'upload-status status-info';
+        approveStatus.textContent = '⏳ 处理中...';
+
+        try {
+          const resp = await fetch('/.netlify/functions/reject', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category, filename, password: approvePassword })
+          });
+          const data = await resp.json();
+          if (data.ok) {
+            approveStatus.className = 'upload-status status-success';
+            approveStatus.textContent = '✅ ' + data.message;
+            setTimeout(async () => {
+              const r = await fetch('/.netlify/functions/list-pending');
+              renderPendingList((await r.json()).items || []);
+              approveStatus.style.display = 'none';
+              loadPendingCount();
+            }, 1000);
+          } else {
+            approveStatus.className = 'upload-status status-error';
+            approveStatus.textContent = '❌ ' + (data.error || '失败');
+          }
+        } catch (err) {
+          approveStatus.className = 'upload-status status-error';
+          approveStatus.textContent = '❌ 网络错误';
+        }
+      }
+
+      // 加载待审批数量
+      async function loadPendingCount() {
+        try {
+          const resp = await fetch('/.netlify/functions/list-pending');
+          const data = await resp.json();
+          const badge = document.getElementById('pendingBadge');
+          if (data.total > 0) {
+            badge.style.display = 'inline-block';
+            badge.textContent = data.total;
+          } else {
+            badge.style.display = 'none';
+          }
+        } catch {}
+      }
+
+      // 启动时加载待审批数量
+      loadPendingCount();
+      // 每30秒刷新一次
+      setInterval(loadPendingCount, 30000);
+
+      // ESC 关闭弹窗（更新以包含审批弹窗）
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
           if (modal.style.display === 'flex') closeModal();
           if (deleteModal.style.display === 'flex') closeDeleteModal();
+          if (approveModal.style.display === 'flex') closeApproveModal();
         }
       });
       document.addEventListener('keydown', (e) => {
