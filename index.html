@@ -64,7 +64,7 @@
   <!-- 底部信息 -->
   <footer class="footer">
     <p>高中物理教学AI演示平台（浙工大附属德高物理组）· Powered by Cloudflare Pages</p>
-    <p class="footer-updated">最后更新：<span id="updateTime">加载中...</span></p>
+    <p class="footer-updated">最后更新：<span id="updateTime">加载中...</span> · 👁️ 访问量：<span id="visitCount">...</span></p>
   </footer>
 
   <!-- ======================================== -->
@@ -1049,6 +1049,11 @@
         origShowCategory(catId);
         setTimeout(loadPreviews, 300);
       };
+
+      // ============ 访问计数 ============
+      fetch('/counter').then(function(r) { return r.json(); }).then(function(d) {
+        if (d.count > 0) document.getElementById('visitCount').textContent = d.count.toLocaleString();
+      }).catch(function() {});
 
       // ============ 启动 ============
       loadCatalog();
