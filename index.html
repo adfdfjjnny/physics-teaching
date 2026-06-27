@@ -56,6 +56,37 @@
   </footer>
 
   <!-- ======================================== -->
+  <!-- 删除确认弹窗                                -->
+  <!-- ======================================== -->
+  <div class="modal-overlay" id="deleteModal" style="display:none;">
+    <div class="modal-panel modal-panel-sm">
+      <div class="modal-header">
+        <h2>⚠️ 确认删除</h2>
+        <button class="modal-close" id="btnCloseDelete">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="delete-warning">
+          确定要删除程序 <strong id="deleteFileName"></strong> 吗？
+        </p>
+        <p class="delete-hint">此操作不可撤销，删除后约1-2分钟生效。</p>
+
+        <div id="deletePasswordField" style="display:none;">
+          <label class="form-label">管理员密码</label>
+          <input type="password" class="form-input" id="deletePassword"
+                 placeholder="请输入管理员密码" autocomplete="off">
+        </div>
+
+        <div class="delete-actions">
+          <button class="btn-cancel" id="btnCancelDelete">取消</button>
+          <button class="btn-danger" id="btnConfirmDelete">确认删除</button>
+        </div>
+
+        <div class="upload-status" id="deleteStatus" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================== -->
   <!-- 上传弹窗                                  -->
   <!-- ======================================== -->
   <div class="modal-overlay" id="uploadModal" style="display:none;">
@@ -213,11 +244,11 @@
 
       function renderCard(program) {
         const cat = program.category;
+        const data = escapeHtml(JSON.stringify({ category: cat.id, filename: program.file }));
         return `
-          <a class="card" href="${program.path}" target="_blank" rel="noopener"
-             style="--card-accent: ${cat.color}">
+          <div class="card" style="--card-accent: ${cat.color}" data-program='${data}'>
             <div class="card-accent"></div>
-            <div class="card-body">
+            <a class="card-body card-link" href="${program.path}" target="_blank" rel="noopener">
               <span class="card-cat-badge" style="background:${cat.color}15;color:${cat.color}">
                 ${cat.emoji} ${cat.name}
               </span>
@@ -226,8 +257,9 @@
                 <span class="card-file">📄 ${escapeHtml(program.file)}</span>
                 <span class="card-arrow">打开 →</span>
               </div>
-            </div>
-          </a>
+            </a>
+            <button class="btn-delete" title="删除此程序" data-action="delete">🗑</button>
+          </div>
         `;
       }
 
@@ -451,7 +483,116 @@
         }, 4000);
       }
 
-      // ESC 关闭弹窗
+      // ========================================
+      // 删除功能
+      // ========================================
+      const deleteModal = document.getElementById('deleteModal');
+      const deleteFileName = document.getElementById('deleteFileName');
+      const deletePasswordField = document.getElementById('deletePasswordField');
+      const deleteStatus = document.getElementById('deleteStatus');
+      let deleteTarget = null;
+
+      // 委托模式：监听所有卡片上的删除按钮点击
+      document.getElementById('cardGrid').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action="delete"]');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const card = btn.closest('.card');
+        if (!card) return;
+        try {
+          deleteTarget = JSON.parse(card.dataset.program);
+        } catch { return; }
+        deleteFileName.textContent = deleteTarget.filename;
+        deleteStatus.style.display = 'none';
+        deleteStatus.className = 'upload-status';
+        deletePasswordField.style.display = 'none';
+        document.getElementById('deletePassword').value = '';
+        document.getElementById('btnConfirmDelete').disabled = false;
+        deleteModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        // 检查是否需要密码
+        checkDeletePasswordRequired();
+      });
+
+      async function checkDeletePasswordRequired() {
+        try {
+          const resp = await fetch('/.netlify/functions/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category: '1-li', filename: '_check_.html' })
+          });
+          if (resp.status === 403) {
+            deletePasswordField.style.display = 'block';
+          }
+        } catch {}
+      }
+
+      document.getElementById('btnCloseDelete').addEventListener('click', closeDeleteModal);
+      document.getElementById('btnCancelDelete').addEventListener('click', closeDeleteModal);
+      deleteModal.addEventListener('click', (e) => {
+        if (e.target === deleteModal) closeDeleteModal();
+      });
+
+      function closeDeleteModal() {
+        deleteModal.style.display = 'none';
+        document.body.style.overflow = '';
+        deleteTarget = null;
+        deleteStatus.style.display = 'none';
+      }
+
+      document.getElementById('btnConfirmDelete').addEventListener('click', async () => {
+        if (!deleteTarget) return;
+        const btn = document.getElementById('btnConfirmDelete');
+        btn.disabled = true;
+        btn.textContent = '删除中...';
+        deleteStatus.style.display = 'block';
+        deleteStatus.className = 'upload-status status-info';
+        deleteStatus.textContent = '⏳ 正在删除...';
+
+        try {
+          const body = {
+            category: deleteTarget.category,
+            filename: deleteTarget.filename
+          };
+          const pw = document.getElementById('deletePassword').value;
+          if (pw) body.password = pw;
+
+          const resp = await fetch('/.netlify/functions/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          const data = await resp.json();
+
+          if (data.ok) {
+            deleteStatus.className = 'upload-status status-success';
+            deleteStatus.innerHTML = '✅ ' + escapeHtml(data.message) + '<br><small>' + escapeHtml(data.detail || '') + '</small>';
+            setTimeout(() => {
+              closeDeleteModal();
+              showToast('程序已删除，约1-2分钟后刷新页面即可生效');
+            }, 2000);
+          } else {
+            deleteStatus.className = 'upload-status status-error';
+            deleteStatus.textContent = '❌ ' + (data.error || '删除失败');
+            btn.disabled = false;
+            btn.textContent = '确认删除';
+          }
+        } catch (err) {
+          deleteStatus.className = 'upload-status status-error';
+          deleteStatus.textContent = '❌ 网络错误';
+          btn.disabled = false;
+          btn.textContent = '确认删除';
+        }
+      });
+
+            // ESC 关闭弹窗
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (modal.style.display === 'flex') closeModal();
+          if (deleteModal.style.display === 'flex') closeDeleteModal();
+        }
+      });
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && modal.style.display === 'flex') {
           closeModal();
