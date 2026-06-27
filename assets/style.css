@@ -178,6 +178,7 @@ body {
 
 /* ---------- 程序卡片 ---------- */
 .card {
+  position: relative;
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -187,7 +188,6 @@ body {
   text-decoration: none;
   color: inherit;
   transition: all 0.25s ease;
-  cursor: pointer;
 }
 
 .card:hover {
@@ -201,12 +201,46 @@ body {
   background: var(--card-accent, var(--primary));
 }
 
+.card-link {
+  text-decoration: none;
+  color: inherit;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .card-body {
   padding: 18px 20px 16px;
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+/* 删除按钮 */
+.btn-delete {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 2;
+  line-height: 1;
+}
+
+.btn-delete:hover {
+  background: #fef2f2;
+  color: #dc2626;
 }
 
 .card-cat-badge {
@@ -777,6 +811,80 @@ body {
 
   .modal-header { padding: 16px 18px 12px; }
   .modal-body { padding: 16px 18px 20px; }
+}
+
+/* ==========================================
+   删除确认弹窗
+   ========================================== */
+.modal-panel-sm {
+  max-width: 400px;
+}
+
+.delete-warning {
+  font-size: 0.95rem;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.delete-warning strong {
+  color: #dc2626;
+  word-break: break-all;
+}
+
+.delete-hint {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.delete-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.btn-cancel {
+  flex: 1;
+  padding: 10px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.btn-cancel:hover {
+  background: var(--bg-secondary);
+}
+
+.btn-danger {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: #dc2626;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #b91c1c;
+  box-shadow: 0 2px 8px rgba(220,38,38,0.3);
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* 打印优化（课堂可能打印） */
