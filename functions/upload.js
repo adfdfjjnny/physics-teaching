@@ -7,7 +7,7 @@ export async function onRequest(context) {
   try { body = await request.json(); } catch { return json(400, { ok: false, error: 'JSON格式错误' }); }
 
   const { category, filename, content, author } = body;
-  const VALID = ['1-li','2-re','3-dianlu','4-dianci','5-lizi','6-guang','7-yuan'];
+  const VALID = ['1-li','2-re','3-dianlu','8-dianchang','4-dianci','5-lizi','6-guang','7-yuan'];
 
   if (!category || !VALID.includes(category)) return json(400, { ok: false, error: '无效分类' });
   if (!filename || filename.includes('/') || !/\.html?$/i.test(filename)) return json(400, { ok: false, error: '文件名不合法' });
