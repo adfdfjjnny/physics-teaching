@@ -82,7 +82,16 @@ async function rebuildCatalog(token, repo) {
         if (Array.isArray(files)) {
           for (const f of files) {
             if (/\.html?$/i.test(f.name) && !f.name.startsWith('.')) {
-              programs.push({ file: f.name, title: f.name.replace(/\.html?$/i,'').replace(/[-_.]/g,' ').replace(/\s+/g,' ').trim(), path: `${cat.id}/${f.name}` });
+              // 尝试读取作者信息
+              let author = '';
+              try {
+                const ar = await fetch(`https://api.github.com/repos/${repo}/contents/${encodeURIComponent(cat.id + '/' + f.name + '.author')}?ref=main`, { headers: h });
+                if (ar.ok) {
+                  const aj = await ar.json();
+                  author = decodeURIComponent(escape(atob(aj.content)));
+                }
+              } catch {}
+              programs.push({ file: f.name, title: f.name.replace(/\.html?$/i,'').replace(/[-_.]/g,' ').replace(/\s+/g,' ').trim(), path: `${cat.id}/${f.name}`, author: author || '' });
             }
           }
         }
