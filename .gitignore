@@ -3,5 +3,7 @@ node_modules/
 Thumbs.db
 *.log
 .ghtoken
+.cftoken
+.wrangler/
 github-upload.js
 upload_to_github.sh
