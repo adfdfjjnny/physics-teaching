@@ -286,22 +286,21 @@
         return `
           <div class="card" style="--card-accent: ${cat.color}" data-program='${data}'>
             <div class="card-accent"></div>
+            <h3 class="card-name">${escapeHtml(program.file.replace(/\.html?$/i,''))}</h3>
             <div class="card-preview" data-preview="${escapeHtml(previewUrl)}">
               <div class="preview-loading">⏳</div>
-              <div class="card-body card-link" data-filepath="${escapeHtml(program.path)}">
-                <span class="card-cat-badge" style="background:${cat.color}15;color:${cat.color}">
-                  ${cat.emoji} ${cat.name}
-                </span>
-                <h3 class="card-title">${escapeHtml(program.title)}</h3>
-                ${program.author ? '<span class="card-author">👤 ' + escapeHtml(program.author) + '</span>' : ''}
-                <div class="card-footer">
-                  <span class="card-file">📄 ${escapeHtml(program.file)}</span>
-                  <span class="card-arrow">打开 →</span>
-                </div>
+            </div>
+            <div class="card-body card-link" data-filepath="${escapeHtml(program.path)}">
+              <span class="card-cat-badge" style="background:${cat.color}15;color:${cat.color}">
+                ${cat.emoji} ${cat.name}
+              </span>
+              ${program.author ? '<span class="card-author">👤 ' + escapeHtml(program.author) + '</span>' : ''}
+              <div class="card-footer">
+                <button class="btn-delete" title="删除此程序" data-action="delete">🗑</button>
+                <button class="btn-download" title="下载此程序" data-action="download">💾</button>
+                <span class="card-arrow">打开 →</span>
               </div>
             </div>
-            <button class="btn-delete" title="删除此程序" data-action="delete">🗑</button>
-            <button class="btn-download" title="下载此程序" data-action="download">💾</button>
           </div>
         `;
       }
