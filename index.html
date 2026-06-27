@@ -282,14 +282,12 @@
       function renderCard(program) {
         const cat = program.category;
         const data = escapeHtml(JSON.stringify({ category: cat.id, filename: program.file }));
-        const previewUrl = 'https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + program.path;
+        const previewUrl = program.path;
         return `
           <div class="card" style="--card-accent: ${cat.color}" data-program='${data}'>
             <div class="card-accent"></div>
-            <div class="card-preview">
-              <iframe src="${previewUrl}" sandbox="allow-scripts allow-same-origin" loading="lazy"
-                      scrolling="no" class="preview-frame"
-                      onload="this.style.opacity='1'"></iframe>
+            <div class="card-preview" data-preview="${escapeHtml(previewUrl)}">
+              <div class="preview-loading">⏳</div>
               <div class="card-body card-link" data-filepath="${escapeHtml(program.path)}">
                 <span class="card-cat-badge" style="background:${cat.color}15;color:${cat.color}">
                   ${cat.emoji} ${cat.name}
@@ -890,6 +888,36 @@
           closeModal();
         }
       });
+
+      // ============ 卡片预览懒加载 ============
+      function loadPreviews() {
+        document.querySelectorAll('.card-preview').forEach(function(el) {
+          if (el.dataset.loaded) return;
+          el.dataset.loaded = '1';
+          var path = el.dataset.preview;
+          if (!path) return;
+          var url = 'https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + path;
+          fetch(url).then(function(r) { return r.text(); }).then(function(html) {
+            var iframe = document.createElement('iframe');
+            iframe.className = 'preview-frame';
+            iframe.sandbox = 'allow-scripts allow-same-origin';
+            iframe.scrolling = 'no';
+            iframe.srcdoc = html;
+            iframe.onload = function() { iframe.style.opacity = '1'; };
+            el.innerHTML = '';
+            el.appendChild(iframe);
+          }).catch(function() {
+            el.innerHTML = '<div class="preview-error">预览不可用</div>';
+          });
+        });
+      }
+
+      // 每次切换分类后加载预览
+      var origShowCategory = showCategory;
+      showCategory = function(catId) {
+        origShowCategory(catId);
+        setTimeout(loadPreviews, 300);
+      };
 
       // ============ 启动 ============
       loadCatalog();
