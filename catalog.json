@@ -90,7 +90,14 @@
       "emoji": "💡",
       "color": "#f97316",
       "desc": "几何光学、波动光学、干涉衍射等",
-      "programs": [],
+      "programs": [
+        {
+          "file": "水下点光源（全反射）.html",
+          "title": "水下点光源（全反射）",
+          "path": "6-guang/水下点光源（全反射）.html",
+          "author": ""
+        }
+      ],
       "description": "几何光学、波动光学、干涉衍射等"
     },
     {
@@ -104,6 +111,6 @@
       "description": "玻尔模型、能级跃迁、原子核等"
     }
   ],
-  "totalPrograms": 5,
-  "updatedAt": "2026-06-27T13:44:42.023Z"
+  "totalPrograms": 6,
+  "updatedAt": "2026-06-27T13:44:51.000Z"
 }
