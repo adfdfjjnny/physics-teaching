@@ -34,6 +34,14 @@ const CATEGORIES = [
     color: '#f59e0b'
   },
   {
+    id: '8-dianchang',
+    name: '电场',
+    fullName: '电场',
+    emoji: '🔵',
+    description: '电场强度、电场线、电势、电容器等',
+    color: '#0891b2'
+  },
+  {
     id: '4-dianci',
     name: '电磁感应',
     fullName: '电磁感应',
