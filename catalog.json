@@ -5,65 +5,83 @@
       "name": "力",
       "fullName": "力学",
       "emoji": "🍎",
-      "description": "牛顿定律、运动学、万有引力等",
       "color": "#2563eb",
-      "programs": []
+      "desc": "牛顿定律、运动学、万有引力等",
+      "programs": [
+        {
+          "file": "滚轮线（摆线）.html",
+          "title": "滚轮线（摆线）",
+          "path": "1-li/滚轮线（摆线）.html"
+        },
+        {
+          "file": "驻波演示.html",
+          "title": "驻波演示",
+          "path": "1-li/驻波演示.html"
+        }
+      ],
+      "description": "牛顿定律、运动学、万有引力等"
     },
     {
       "id": "2-re",
       "name": "热",
       "fullName": "热学",
       "emoji": "🔥",
-      "description": "热力学定律、分子动理论等",
       "color": "#dc2626",
-      "programs": []
+      "desc": "热力学定律、分子动理论等",
+      "programs": [],
+      "description": "热力学定律、分子动理论等"
     },
     {
       "id": "3-dianlu",
       "name": "电路",
       "fullName": "电路",
       "emoji": "⚡",
-      "description": "欧姆定律、串并联电路、基尔霍夫等",
       "color": "#f59e0b",
-      "programs": []
+      "desc": "欧姆定律、串并联电路、基尔霍夫等",
+      "programs": [],
+      "description": "欧姆定律、串并联电路、基尔霍夫等"
     },
     {
       "id": "4-dianci",
       "name": "电磁感应",
       "fullName": "电磁感应",
       "emoji": "🧲",
-      "description": "法拉第定律、楞次定律、互感自感等",
       "color": "#10b981",
-      "programs": []
+      "desc": "法拉第定律、楞次定律、互感自感等",
+      "programs": [],
+      "description": "法拉第定律、楞次定律、互感自感等"
     },
     {
       "id": "5-lizi",
       "name": "带电粒子",
       "fullName": "带电粒子在磁场中运动",
       "emoji": "⚛️",
-      "description": "洛伦兹力、圆周运动、质谱仪等",
       "color": "#8b5cf6",
-      "programs": []
+      "desc": "洛伦兹力、圆周运动、质谱仪等",
+      "programs": [],
+      "description": "洛伦兹力、圆周运动、质谱仪等"
     },
     {
       "id": "6-guang",
       "name": "光",
       "fullName": "光学",
       "emoji": "💡",
-      "description": "几何光学、波动光学、干涉衍射等",
       "color": "#f97316",
-      "programs": []
+      "desc": "几何光学、波动光学、干涉衍射等",
+      "programs": [],
+      "description": "几何光学、波动光学、干涉衍射等"
     },
     {
       "id": "7-yuan",
       "name": "原",
       "fullName": "原子物理",
       "emoji": "🔬",
-      "description": "玻尔模型、能级跃迁、原子核等",
       "color": "#6b7280",
-      "programs": []
+      "desc": "玻尔模型、能级跃迁、原子核等",
+      "programs": [],
+      "description": "玻尔模型、能级跃迁、原子核等"
     }
   ],
-  "totalPrograms": 0,
-  "updatedAt": "2026-06-27T13:06:48.137Z"
+  "totalPrograms": 2,
+  "updatedAt": "2026-06-27T13:09:35.776Z"
 }
