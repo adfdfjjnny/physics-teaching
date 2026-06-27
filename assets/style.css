@@ -212,9 +212,9 @@ body {
 /* 预览区 */
 .card-preview {
   position: relative;
-  height: 220px;
+  height: 200px;
   overflow: hidden;
-  background: #f8fafc;
+  background: #f1f5f9;
   border-bottom: 1px solid var(--border);
 }
 
@@ -227,6 +227,29 @@ body {
   opacity: 0;
   transition: opacity 0.3s;
   pointer-events: none;
+}
+
+.preview-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 2rem;
+  animation: pulse 1.5s infinite;
+}
+
+.preview-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
 }
 
 .card-link {
