@@ -281,14 +281,14 @@ body {
 
 /* 删除按钮 */
 .btn-delete {
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: transparent;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e2e8f0;
+  background: var(--bg);
   color: #94a3b8;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   cursor: pointer;
-  border-radius: 50%;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -299,18 +299,19 @@ body {
 .btn-delete:hover {
   background: #fef2f2;
   color: #dc2626;
+  border-color: #fecaca;
 }
 
 /* 下载按钮 */
 .btn-download {
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: transparent;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e2e8f0;
+  background: var(--bg);
   color: #94a3b8;
-  font-size: 0.85rem;
+  font-size: 1rem;
   cursor: pointer;
-  border-radius: 50%;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -321,6 +322,7 @@ body {
 .btn-download:hover {
   background: var(--primary-bg);
   color: var(--primary);
+  border-color: var(--primary-light);
 }
 
 .card-cat-badge {
@@ -346,28 +348,29 @@ body {
 }
 
 .card-footer {
-  margin-top: auto;
+  margin-top: 10px;
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   font-size: 0.82rem;
   color: var(--text-secondary);
 }
 
 .card-arrow {
-  color: var(--primary);
-  font-weight: 500;
-  font-size: 0.82rem;
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: all 0.2s ease;
+  color: white;
+  background: var(--primary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 6px 14px;
+  border-radius: 6px;
   margin-left: auto;
+  opacity: 1;
+  white-space: nowrap;
 }
 
-.card:hover .card-arrow {
-  opacity: 1;
-  transform: translateX(0);
+.card-arrow:hover {
+  background: var(--primary-dark);
 }
 
 /* ---------- 空状态 ---------- */
