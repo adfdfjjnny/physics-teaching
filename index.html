@@ -574,7 +574,32 @@
         if (!downloadTarget) return;
         const path = downloadTarget.category + '/' + downloadTarget.filename;
 
-        // 直接触发下载，无需密码
+        // 检查是否需要下载密码
+        let needPwd = false;
+        try {
+          const check = await fetch('/.netlify/functions/check-download', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          });
+          needPwd = (check.status === 403);
+        } catch {}
+
+        if (needPwd) {
+          const pw = prompt('请输入下载密码：' + downloadTarget.filename);
+          if (!pw) return;
+          const verify = await fetch('/.netlify/functions/check-download', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pw })
+          });
+          if (verify.status === 403) {
+            alert('下载密码错误！');
+            return;
+          }
+        }
+
+        // 触发下载
         try {
           const resp = await fetch(path);
           if (!resp.ok) throw new Error('文件获取失败');
