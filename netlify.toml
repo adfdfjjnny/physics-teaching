@@ -1,0 +1,20 @@
+# Netlify 部署配置
+# 每次 git push 后 Netlify 自动运行 node build.js 生成目录
+
+[build]
+  command = "node build.js"
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# 头部安全设置
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+
+# 上传 API 路由（Netlify Functions 自动挂载到 /.netlify/functions/）
+# 前端通过 POST /.netlify/functions/upload 调用上传接口
