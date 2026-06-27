@@ -44,7 +44,14 @@
       "emoji": "🧲",
       "color": "#10b981",
       "desc": "法拉第定律、楞次定律、互感自感等",
-      "programs": [],
+      "programs": [
+        {
+          "file": "旋转圆.html",
+          "title": "旋转圆",
+          "path": "4-dianci/旋转圆.html",
+          "author": ""
+        }
+      ],
       "description": "法拉第定律、楞次定律、互感自感等"
     },
     {
@@ -78,6 +85,6 @@
       "description": "玻尔模型、能级跃迁、原子核等"
     }
   ],
-  "totalPrograms": 1,
-  "updatedAt": "2026-06-27T13:36:26.602Z"
+  "totalPrograms": 2,
+  "updatedAt": "2026-06-27T13:40:28.039Z"
 }
