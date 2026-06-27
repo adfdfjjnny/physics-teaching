@@ -22,10 +22,11 @@ exports.handler = async (event) => {
 
   const { category, filename } = body;
 
-  // 密码保护
-  if (process.env.UPLOAD_PASSWORD) {
-    if ((body.password || '') !== process.env.UPLOAD_PASSWORD) {
-      return json(403, { ok: false, error: '密码错误' });
+  // 删除需要管理员密码
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (adminPassword) {
+    if ((body.password || '') !== adminPassword) {
+      return json(403, { ok: false, error: '管理员密码错误' });
     }
   }
 
