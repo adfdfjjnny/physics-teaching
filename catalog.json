@@ -1,1 +1,111 @@
-{"categories":[{"id":"1-li","programs":[{"file":"滚轮线（摆线）.html","title":"滚轮线（摆线）","path":"1-li/滚轮线（摆线）.html"},{"file":"牛顿第一定律-惯性演示.html","title":"牛顿第一定律 惯性演示","path":"1-li/牛顿第一定律-惯性演示.html"},{"file":"驻波演示.html","title":"驻波演示","path":"1-li/驻波演示.html"}]},{"id":"2-re","programs":[{"file":"布朗运动模拟.html","title":"布朗运动模拟","path":"2-re/布朗运动模拟.html"}]},{"id":"3-dianlu","programs":[{"file":"欧姆定律-电路模拟.html","title":"欧姆定律 电路模拟","path":"3-dianlu/欧姆定律-电路模拟.html"}]},{"id":"4-dianci","programs":[{"file":"法拉第电磁感应.html","title":"法拉第电磁感应","path":"4-dianci/法拉第电磁感应.html"}]},{"id":"5-lizi","programs":[{"file":"带电粒子在磁场中的圆周运动.html","title":"带电粒子在磁场中的圆周运动","path":"5-lizi/带电粒子在磁场中的圆周运动.html"}]},{"id":"6-guang","programs":[{"file":"光的折射与反射.html","title":"光的折射与反射","path":"6-guang/光的折射与反射.html"}]},{"id":"7-yuan","programs":[]}],"totalPrograms":8,"updatedAt":"2026-06-27T04:48:39.625Z"}
+{
+  "categories": [
+    {
+      "id": "1-li",
+      "name": "力",
+      "fullName": "力学",
+      "emoji": "🍎",
+      "description": "牛顿定律、运动学、万有引力等",
+      "color": "#2563eb",
+      "programs": [
+        {
+          "file": "牛顿第一定律-惯性演示.html",
+          "title": "牛顿第一定律 惯性演示",
+          "path": "1-li/牛顿第一定律-惯性演示.html"
+        }
+      ]
+    },
+    {
+      "id": "2-re",
+      "name": "热",
+      "fullName": "热学",
+      "emoji": "🔥",
+      "description": "热力学定律、分子动理论等",
+      "color": "#dc2626",
+      "programs": [
+        {
+          "file": "布朗运动模拟.html",
+          "title": "布朗运动模拟",
+          "path": "2-re/布朗运动模拟.html"
+        }
+      ]
+    },
+    {
+      "id": "3-dianlu",
+      "name": "电路",
+      "fullName": "电路",
+      "emoji": "⚡",
+      "description": "欧姆定律、串并联电路、基尔霍夫等",
+      "color": "#f59e0b",
+      "programs": [
+        {
+          "file": "欧姆定律-电路模拟.html",
+          "title": "欧姆定律 电路模拟",
+          "path": "3-dianlu/欧姆定律-电路模拟.html"
+        }
+      ]
+    },
+    {
+      "id": "4-dianci",
+      "name": "电磁感应",
+      "fullName": "电磁感应",
+      "emoji": "🧲",
+      "description": "法拉第定律、楞次定律、互感自感等",
+      "color": "#10b981",
+      "programs": [
+        {
+          "file": "法拉第电磁感应.html",
+          "title": "法拉第电磁感应",
+          "path": "4-dianci/法拉第电磁感应.html"
+        }
+      ]
+    },
+    {
+      "id": "5-lizi",
+      "name": "带电粒子",
+      "fullName": "带电粒子在磁场中运动",
+      "emoji": "⚛️",
+      "description": "洛伦兹力、圆周运动、质谱仪等",
+      "color": "#8b5cf6",
+      "programs": [
+        {
+          "file": "带电粒子在磁场中的圆周运动.html",
+          "title": "带电粒子在磁场中的圆周运动",
+          "path": "5-lizi/带电粒子在磁场中的圆周运动.html"
+        }
+      ]
+    },
+    {
+      "id": "6-guang",
+      "name": "光",
+      "fullName": "光学",
+      "emoji": "💡",
+      "description": "几何光学、波动光学、干涉衍射等",
+      "color": "#f97316",
+      "programs": [
+        {
+          "file": "光的折射与反射.html",
+          "title": "光的折射与反射",
+          "path": "6-guang/光的折射与反射.html"
+        }
+      ]
+    },
+    {
+      "id": "7-yuan",
+      "name": "原",
+      "fullName": "原子物理",
+      "emoji": "🔬",
+      "description": "玻尔模型、能级跃迁、原子核等",
+      "color": "#6b7280",
+      "programs": [
+        {
+          "file": "玻尔模型-能级跃迁.html",
+          "title": "玻尔模型 能级跃迁",
+          "path": "7-yuan/玻尔模型-能级跃迁.html"
+        }
+      ]
+    }
+  ],
+  "totalPrograms": 7,
+  "updatedAt": "2026-06-27T12:28:56.705Z"
+}
