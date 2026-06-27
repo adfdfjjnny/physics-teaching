@@ -196,7 +196,8 @@
       // ============ 加载目录 ============
       async function loadCatalog() {
         try {
-          const resp = await fetch('catalog.json');
+          // 直接从 GitHub 读取最新目录（审批通过后即时生效，无需部署）
+          const resp = await fetch('https://raw.githubusercontent.com/adfdfjjnny/physics-teaching/main/catalog.json');
           if (!resp.ok) throw new Error('HTTP ' + resp.status);
           catalog = await resp.json();
           renderNav();
@@ -283,7 +284,7 @@
         return `
           <div class="card" style="--card-accent: ${cat.color}" data-program='${data}'>
             <div class="card-accent"></div>
-            <a class="card-body card-link" href="${program.path}" target="_blank" rel="noopener">
+            <a class="card-body card-link" href="https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/${program.path}" target="_blank" rel="noopener">
               <span class="card-cat-badge" style="background:${cat.color}15;color:${cat.color}">
                 ${cat.emoji} ${cat.name}
               </span>
