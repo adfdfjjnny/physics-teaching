@@ -58,7 +58,7 @@
 
   <!-- 底部信息 -->
   <footer class="footer">
-    <p>高中物理教学演示平台（浙工大附属德高物理组）· Powered by Netlify</p>
+    <p>高中物理教学演示平台（浙工大附属德高物理组）· Powered by Cloudflare Pages</p>
     <p class="footer-updated">最后更新：<span id="updateTime">加载中...</span></p>
   </footer>
 
@@ -428,7 +428,7 @@
             content: base64
           };
 
-          const resp = await fetch('/.netlify/functions/upload', {
+          const resp = await fetch('/upload', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -533,7 +533,7 @@
 
       async function checkDeletePasswordRequired() {
         try {
-          const resp = await fetch('/.netlify/functions/delete', {
+          const resp = await fetch('/delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ category: '1-li', filename: '_check_.html' })
@@ -574,7 +574,7 @@
           const pw = document.getElementById('deletePassword').value;
           if (pw) body.password = pw;
 
-          const resp = await fetch('/.netlify/functions/delete', {
+          const resp = await fetch('/delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -614,7 +614,7 @@
         // 检查是否需要下载密码
         let needPwd = false;
         try {
-          const check = await fetch('/.netlify/functions/check-download', {
+          const check = await fetch('/check-download', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({})
@@ -625,7 +625,7 @@
         if (needPwd) {
           const pw = prompt('请输入下载密码：' + downloadTarget.filename);
           if (!pw) return;
-          const verify = await fetch('/.netlify/functions/check-download', {
+          const verify = await fetch('/check-download', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password: pw })
@@ -693,7 +693,7 @@
         approveStatus.textContent = '⏳ 加载中...';
 
         try {
-          const resp = await fetch('/.netlify/functions/list-pending');
+          const resp = await fetch('/list-pending');
           const data = await resp.json();
 
           document.getElementById('approveLogin').style.display = 'none';
@@ -757,7 +757,7 @@
         approveStatus.textContent = '⏳ 审批中...';
 
         try {
-          const resp = await fetch('/.netlify/functions/approve', {
+          const resp = await fetch('/approve', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ category, filename, password: approvePassword })
@@ -768,7 +768,7 @@
             approveStatus.textContent = '✅ ' + data.message;
             // 刷新列表
             setTimeout(async () => {
-              const r = await fetch('/.netlify/functions/list-pending');
+              const r = await fetch('/list-pending');
               renderPendingList((await r.json()).items || []);
               approveStatus.style.display = 'none';
               loadPendingCount();
@@ -790,7 +790,7 @@
         approveStatus.textContent = '⏳ 处理中...';
 
         try {
-          const resp = await fetch('/.netlify/functions/reject', {
+          const resp = await fetch('/reject', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ category, filename, password: approvePassword })
@@ -800,7 +800,7 @@
             approveStatus.className = 'upload-status status-success';
             approveStatus.textContent = '✅ ' + data.message;
             setTimeout(async () => {
-              const r = await fetch('/.netlify/functions/list-pending');
+              const r = await fetch('/list-pending');
               renderPendingList((await r.json()).items || []);
               approveStatus.style.display = 'none';
               loadPendingCount();
@@ -818,7 +818,7 @@
       // 加载待审批数量
       async function loadPendingCount() {
         try {
-          const resp = await fetch('/.netlify/functions/list-pending');
+          const resp = await fetch('/list-pending');
           const data = await resp.json();
           const badge = document.getElementById('pendingBadge');
           if (data.total > 0) {
