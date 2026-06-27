@@ -38,6 +38,11 @@
   <nav class="nav-bar" id="navBar">
     <!-- 由JS动态渲染 -->
   </nav>
+  <div class="search-bar">
+    <input type="text" class="search-input" id="searchInput"
+           placeholder="🔍 搜索程序名称..." autocomplete="off">
+    <span class="search-result" id="searchResult"></span>
+  </div>
 
   <!-- 主内容区 -->
   <main class="main-content">
@@ -184,22 +189,18 @@
         </select>
 
         <!-- 文件选择 -->
-        <label class="form-label">选择 HTML 文件</label>
+        <label class="form-label">选择 HTML 文件（可多选）</label>
         <div class="file-drop-zone" id="fileDropZone">
-          <input type="file" id="uploadFile" accept=".html,.htm" class="file-input-hidden">
+          <input type="file" id="uploadFile" accept=".html,.htm" class="file-input-hidden" multiple>
           <div class="file-drop-content">
             <span class="file-drop-icon">📁</span>
-            <span id="fileDropText">点击选择文件，或拖拽 .html 文件到此处</span>
-            <span class="file-drop-hint">最大 5MB</span>
+            <span id="fileDropText">点击选择文件，或拖拽 .html 文件到此处（支持多选）</span>
+            <span class="file-drop-hint">每个最大 5MB</span>
           </div>
         </div>
 
-        <!-- 文件名预览 -->
-        <div class="file-preview" id="filePreview" style="display:none;">
-          <span class="file-preview-icon">📄</span>
-          <span class="file-preview-name" id="filePreviewName"></span>
-          <span class="file-preview-size" id="filePreviewSize"></span>
-        </div>
+        <!-- 文件列表预览 -->
+        <div class="file-list" id="fileList" style="display:none;"></div>
 
         <!-- 上传状态提示 -->
         <div class="upload-status" id="uploadStatus" style="display:none;"></div>
@@ -349,15 +350,13 @@
       const modal = document.getElementById('uploadModal');
       const fileInput = document.getElementById('uploadFile');
       const dropZone = document.getElementById('fileDropZone');
-      const filePreview = document.getElementById('filePreview');
-      const filePreviewName = document.getElementById('filePreviewName');
-      const filePreviewSize = document.getElementById('filePreviewSize');
+      const fileList = document.getElementById('fileList');
       const fileDropText = document.getElementById('fileDropText');
       const btnSubmit = document.getElementById('btnSubmitUpload');
       const btnSubmitText = document.getElementById('btnSubmitText');
       const uploadSpinner = document.getElementById('uploadSpinner');
       const uploadStatus = document.getElementById('uploadStatus');
-      let selectedFile = null;
+      let selectedFiles = [];
 
       // 打开弹窗
       document.getElementById('btnOpenUpload').addEventListener('click', () => {
@@ -380,9 +379,10 @@
 
       function resetUploadForm() {
         fileInput.value = '';
-        selectedFile = null;
-        filePreview.style.display = 'none';
-        fileDropText.textContent = '点击选择文件，或拖拽 .html 文件到此处';
+        selectedFiles = [];
+        fileList.style.display = 'none';
+        fileList.innerHTML = '';
+        fileDropText.textContent = '点击选择文件，或拖拽 .html 文件到此处（支持多选）';
         fileDropText.className = '';
         btnSubmit.disabled = true;
         uploadStatus.style.display = 'none';
@@ -390,7 +390,6 @@
         uploadStatus.textContent = '';
         btnSubmitText.textContent = '上传到服务器';
         uploadSpinner.style.display = 'none';
-        // upload no longer needs password
       }
 
       // 文件选择：click
@@ -398,9 +397,7 @@
 
       // 文件选择：change
       fileInput.addEventListener('change', () => {
-        if (fileInput.files.length > 0) {
-          handleFile(fileInput.files[0]);
-        }
+        handleFiles(Array.from(fileInput.files));
       });
 
       // 拖拽
@@ -414,26 +411,34 @@
       dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         dropZone.classList.remove('dragover');
-        if (e.dataTransfer.files.length > 0) {
-          handleFile(e.dataTransfer.files[0]);
-        }
+        handleFiles(Array.from(e.dataTransfer.files));
       });
 
-      function handleFile(file) {
-        if (!file.name.match(/\.html?$/i)) {
-          alert('请选择 .html 或 .htm 文件');
+      function handleFiles(files) {
+        files.forEach(function(f) {
+          if (!f.name.match(/\.html?$/i)) return;
+          if (f.size > 5 * 1024 * 1024) return;
+          if (!selectedFiles.find(function(x) { return x.name === f.name; })) {
+            selectedFiles.push(f);
+          }
+        });
+        if (selectedFiles.length === 0) {
+          alert('请选择有效的 .html 文件（每个小于5MB）');
           return;
         }
-        if (file.size > 5 * 1024 * 1024) {
-          alert('文件不能超过 5MB');
-          return;
-        }
-        selectedFile = file;
-        filePreview.style.display = 'flex';
-        filePreviewName.textContent = file.name;
-        filePreviewSize.textContent = formatSize(file.size);
-        fileDropText.textContent = '✅ 已选择文件';
+        fileDropText.textContent = '✅ 已选择 ' + selectedFiles.length + ' 个文件';
         fileDropText.className = 'text-success';
+        fileList.style.display = 'block';
+        fileList.innerHTML = selectedFiles.map(function(f, i) {
+          return '<div class="file-preview"><span class="file-preview-icon">📄</span><span class="file-preview-name">' + f.name + '</span><span class="file-preview-size">' + formatSize(f.size) + '</span><button class="file-remove" data-idx="' + i + '">✕</button></div>';
+        }).join('');
+        fileList.querySelectorAll('.file-remove').forEach(function(btn) {
+          btn.addEventListener('click', function(e) { e.stopPropagation(); e.preventDefault();
+            var idx = parseInt(this.dataset.idx);
+            selectedFiles.splice(idx, 1);
+            handleFiles([]);
+          });
+        });
         btnSubmit.disabled = false;
         uploadStatus.style.display = 'none';
       }
@@ -444,68 +449,49 @@
         return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
       }
 
-      // 提交上传
+      // 提交上传（支持批量）
       btnSubmit.addEventListener('click', async () => {
-        if (!selectedFile) return;
+        if (selectedFiles.length === 0) return;
 
         const category = document.getElementById('uploadCategory').value;
-
-        // 显示加载状态
         btnSubmit.disabled = true;
-        btnSubmitText.textContent = '正在上传...';
         uploadSpinner.style.display = 'inline-block';
         uploadStatus.style.display = 'block';
         uploadStatus.className = 'upload-status status-info';
-        uploadStatus.textContent = '⏳ 正在上传文件到服务器...';
 
-        try {
-          // 读取文件为 base64
-          const base64 = await readFileAsBase64(selectedFile);
+        var okCount = 0, failCount = 0;
+        var results = [];
 
-          // 发送请求
-          uploadStatus.textContent = '⏳ 正在提交到 GitHub...';
+        for (var i = 0; i < selectedFiles.length; i++) {
+          var file = selectedFiles[i];
+          btnSubmitText.textContent = '上传中 (' + (i+1) + '/' + selectedFiles.length + ')...';
+          uploadStatus.textContent = '⏳ 正在上传: ' + file.name;
 
-          const body = {
-            category: category,
-            filename: selectedFile.name,
-            content: base64
-          };
-
-          const resp = await fetch('/upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-          });
-
-          const data = await resp.json();
-
-          if (data.ok) {
-            uploadStatus.className = 'upload-status status-success';
-            uploadStatus.innerHTML = '✅ ' + escapeHtml(data.message) +
-              '<br><small>' + escapeHtml(data.detail || '') + '</small>';
-            btnSubmitText.textContent = '上传成功！';
-            uploadSpinner.style.display = 'none';
-
-            // 3秒后自动关闭
-            setTimeout(() => {
-              closeModal();
-              // 提示用户刷新
-              showToast('文件已提交，约1-2分钟后刷新页面即可看到新程序 ✨');
-            }, 3000);
-
-          } else {
-            uploadStatus.className = 'upload-status status-error';
-            uploadStatus.textContent = '❌ ' + (data.error || '上传失败');
-            btnSubmitText.textContent = '上传失败，重试';
-            uploadSpinner.style.display = 'none';
-            btnSubmit.disabled = false;
+          try {
+            var base64 = await readFileAsBase64(file);
+            var resp = await fetch('/upload', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ category: category, filename: file.name, content: base64 })
+            });
+            var data = await resp.json();
+            if (data.ok) { okCount++; results.push('✅ ' + file.name); }
+            else { failCount++; results.push('❌ ' + file.name + ': ' + (data.error || '失败')); }
+          } catch (err) {
+            failCount++; results.push('❌ ' + file.name + ': 网络错误');
           }
-        } catch (err) {
-          uploadStatus.className = 'upload-status status-error';
-          uploadStatus.textContent = '❌ 网络错误：' + (err.message || '请检查网络连接');
-          btnSubmitText.textContent = '上传失败，重试';
-          uploadSpinner.style.display = 'none';
-          btnSubmit.disabled = false;
+        }
+
+        uploadStatus.className = 'upload-status ' + (failCount === 0 ? 'status-success' : 'status-info');
+        uploadStatus.innerHTML = '✅ ' + okCount + ' 个成功' + (failCount > 0 ? '，❌ ' + failCount + ' 个失败' : '') +
+          '<br><small>' + results.join(' · ') + '</small>';
+        btnSubmitText.textContent = '完成！';
+        uploadSpinner.style.display = 'none';
+
+        if (failCount === 0) {
+          setTimeout(function() { closeModal(); showToast(okCount + ' 个文件已提交，等待审批'); }, 3000);
+        } else {
+          btnSubmit.disabled = false; btnSubmitText.textContent = '重试';
         }
       });
 
@@ -963,6 +949,55 @@
             badge.style.display = 'none';
           }
         } catch {}
+      }
+
+      // ============ 搜索 ============
+      var searchInput = document.getElementById('searchInput');
+      var searchResult = document.getElementById('searchResult');
+      var searchTimer;
+
+      searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(doSearch, 250);
+      });
+
+      function doSearch() {
+        var query = searchInput.value.trim().toLowerCase();
+        if (!query) {
+          showCategory(activeCategoryId);
+          searchResult.textContent = '';
+          return;
+        }
+
+        if (!catalog) return;
+        var results = [];
+        catalog.categories.forEach(function(cat) {
+          cat.programs.forEach(function(p) {
+            p.category = cat;
+            if (p.title.toLowerCase().indexOf(query) >= 0 || p.file.toLowerCase().indexOf(query) >= 0 || (cat.name + cat.fullName).indexOf(query) >= 0) {
+              results.push(p);
+            }
+          });
+        });
+
+        document.getElementById('categoryTitle').textContent = '🔍 搜索: ' + query;
+        document.getElementById('categoryDesc').textContent = '';
+        searchResult.textContent = '找到 ' + results.length + ' 个程序';
+        document.getElementById('programCount').textContent = '';
+
+        var grid = document.getElementById('cardGrid');
+        var empty = document.getElementById('emptyState');
+        if (results.length === 0) {
+          grid.style.display = 'none';
+          empty.style.display = 'block';
+          empty.querySelector('h3').textContent = '未找到匹配的程序';
+          empty.querySelector('p').textContent = '试试其他关键词';
+        } else {
+          grid.style.display = 'grid';
+          empty.style.display = 'none';
+          grid.innerHTML = results.map(function(p) { return renderCard(p); }).join('');
+          setTimeout(loadPreviews, 300);
+        }
       }
 
       // 启动时加载待审批数量
