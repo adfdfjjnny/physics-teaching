@@ -107,10 +107,19 @@ function scanCategory(cat) {
   htmlFiles.sort((a, b) => a.localeCompare(b, 'zh-CN'));
 
   for (const file of htmlFiles) {
+    // 尝试读取作者信息
+    let author = '';
+    const authorFile = path.join(dirPath, file + '.author');
+    if (fs.existsSync(authorFile)) {
+      try {
+        author = fs.readFileSync(authorFile, 'utf-8').trim();
+      } catch {}
+    }
     programs.push({
       file: file,
       title: filenameToTitle(file),
-      path: `${cat.id}/${file}`
+      path: `${cat.id}/${file}`,
+      author: author || ''
     });
   }
 
