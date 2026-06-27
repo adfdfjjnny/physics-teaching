@@ -81,14 +81,21 @@ body {
   margin: 0 auto;
   padding: 16px 20px 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-wrap: nowrap;
+  gap: 6px;
   position: sticky;
   top: 0;
   z-index: 100;
   background: var(--bg-secondary);
   padding-bottom: 12px;
   border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.nav-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-tab {
