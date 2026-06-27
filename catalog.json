@@ -7,7 +7,26 @@
       "emoji": "🍎",
       "color": "#2563eb",
       "desc": "牛顿定律、运动学、万有引力等",
-      "programs": [],
+      "programs": [
+        {
+          "file": "水下点光源（全反射）.html",
+          "title": "水下点光源（全反射）",
+          "path": "1-li/水下点光源（全反射）.html",
+          "author": "{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/repos/contents#get-repository-content\",\"status\":\"404\"}"
+        },
+        {
+          "file": "滚轮线（摆线）.html",
+          "title": "滚轮线（摆线）",
+          "path": "1-li/滚轮线（摆线）.html",
+          "author": "{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/repos/contents#get-repository-content\",\"status\":\"404\"}"
+        },
+        {
+          "file": "驻波演示.html",
+          "title": "驻波演示",
+          "path": "1-li/驻波演示.html",
+          "author": "{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/repos/contents#get-repository-content\",\"status\":\"404\"}"
+        }
+      ],
       "description": "牛顿定律、运动学、万有引力等"
     },
     {
@@ -57,7 +76,20 @@
       "emoji": "⚛️",
       "color": "#8b5cf6",
       "desc": "洛伦兹力、圆周运动、质谱仪等",
-      "programs": [],
+      "programs": [
+        {
+          "file": "旋转圆.html",
+          "title": "旋转圆",
+          "path": "5-lizi/旋转圆.html",
+          "author": ""
+        },
+        {
+          "file": "空间螺旋磁聚焦.html",
+          "title": "空间螺旋磁聚焦",
+          "path": "5-lizi/空间螺旋磁聚焦.html",
+          "author": "{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/repos/contents#get-repository-content\",\"status\":\"404\"}"
+        }
+      ],
       "description": "洛伦兹力、圆周运动、质谱仪等"
     },
     {
@@ -67,7 +99,14 @@
       "emoji": "💡",
       "color": "#f97316",
       "desc": "几何光学、波动光学、干涉衍射等",
-      "programs": [],
+      "programs": [
+        {
+          "file": "水下点光源（全反射）.html",
+          "title": "水下点光源（全反射）",
+          "path": "6-guang/水下点光源（全反射）.html",
+          "author": "{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/repos/contents#get-repository-content\",\"status\":\"404\"}"
+        }
+      ],
       "description": "几何光学、波动光学、干涉衍射等"
     },
     {
@@ -81,6 +120,6 @@
       "description": "玻尔模型、能级跃迁、原子核等"
     }
   ],
-  "totalPrograms": 0,
-  "updatedAt": "2026-06-27T16:09:06.853Z"
+  "totalPrograms": 6,
+  "updatedAt": "2026-06-27T16:09:58.951Z"
 }
