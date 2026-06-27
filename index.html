@@ -282,18 +282,24 @@
       function renderCard(program) {
         const cat = program.category;
         const data = escapeHtml(JSON.stringify({ category: cat.id, filename: program.file }));
+        const previewUrl = 'https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + program.path;
         return `
           <div class="card" style="--card-accent: ${cat.color}" data-program='${data}'>
             <div class="card-accent"></div>
-            <div class="card-body card-link" data-filepath="${escapeHtml(program.path)}" style="cursor:pointer">
-              <span class="card-cat-badge" style="background:${cat.color}15;color:${cat.color}">
-                ${cat.emoji} ${cat.name}
-              </span>
-              <h3 class="card-title">${escapeHtml(program.title)}</h3>
-              ${program.author ? '<span class="card-author">👤 ' + escapeHtml(program.author) + '</span>' : ''}
-              <div class="card-footer">
-                <span class="card-file">📄 ${escapeHtml(program.file)}</span>
-                <span class="card-arrow">打开 →</span>
+            <div class="card-preview">
+              <iframe src="${previewUrl}" sandbox="allow-scripts allow-same-origin" loading="lazy"
+                      scrolling="no" class="preview-frame"
+                      onload="this.style.opacity='1'"></iframe>
+              <div class="card-body card-link" data-filepath="${escapeHtml(program.path)}">
+                <span class="card-cat-badge" style="background:${cat.color}15;color:${cat.color}">
+                  ${cat.emoji} ${cat.name}
+                </span>
+                <h3 class="card-title">${escapeHtml(program.title)}</h3>
+                ${program.author ? '<span class="card-author">👤 ' + escapeHtml(program.author) + '</span>' : ''}
+                <div class="card-footer">
+                  <span class="card-file">📄 ${escapeHtml(program.file)}</span>
+                  <span class="card-arrow">打开 →</span>
+                </div>
               </div>
             </div>
             <button class="btn-delete" title="删除此程序" data-action="delete">🗑</button>
