@@ -61,6 +61,14 @@ body {
   margin-right: 6px;
 }
 
+.title-logo {
+  height: 48px;
+  width: auto;
+  vertical-align: middle;
+  margin-right: 8px;
+  border-radius: 4px;
+}
+
 .site-subtitle {
   font-size: 0.95rem;
   opacity: 0.8;
