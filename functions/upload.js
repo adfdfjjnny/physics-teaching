@@ -6,7 +6,7 @@ export async function onRequest(context) {
   let body;
   try { body = await request.json(); } catch { return json(400, { ok: false, error: 'JSON格式错误' }); }
 
-  const { category, filename, content } = body;
+  const { category, filename, content, author } = body;
   const VALID = ['1-li','2-re','3-dianlu','4-dianci','5-lizi','6-guang','7-yuan'];
 
   if (!category || !VALID.includes(category)) return json(400, { ok: false, error: '无效分类' });
@@ -22,13 +22,12 @@ export async function onRequest(context) {
 
   const filePath = `_pending/${category}/${filename}`;
   const enc = filePath.split('/').map(s => encodeURIComponent(s)).join('/');
+  const h = { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json', 'User-Agent': 'cf-pages' };
 
   try {
     let sha = null;
     try {
-      const r = await fetch(`https://api.github.com/repos/${repo}/contents/${enc}?ref=main`, {
-        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json', 'User-Agent': 'cf-pages' }
-      });
+      const r = await fetch(`https://api.github.com/repos/${repo}/contents/${enc}?ref=main`, { headers: h });
       if (r.ok) sha = (await r.json()).sha;
     } catch {}
 
@@ -37,10 +36,27 @@ export async function onRequest(context) {
 
     const r = await fetch(`https://api.github.com/repos/${repo}/contents/${enc}`, {
       method: 'PUT',
-      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'User-Agent': 'cf-pages' },
+      headers: { ...h, 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
     if (!r.ok) { const e = await r.json().catch(()=>({})); return json(r.status, { ok: false, error: e.message }); }
+
+    // 同时保存作者信息到 .author 文件
+    if (author) {
+      const authorPath = `_pending/${category}/${filename}.author`;
+      const authorEnc = authorPath.split('/').map(s => encodeURIComponent(s)).join('/');
+      const authorContent = btoa(unescape(encodeURIComponent(author)));
+      let authorSha = null;
+      try {
+        const ar = await fetch(`https://api.github.com/repos/${repo}/contents/${authorEnc}?ref=main`, { headers: h });
+        if (ar.ok) authorSha = (await ar.json()).sha;
+      } catch {}
+      const ap = { message: `📝 作者: ${author}`, content: authorContent, branch: 'main' };
+      if (authorSha) ap.sha = authorSha;
+      await fetch(`https://api.github.com/repos/${repo}/contents/${authorEnc}`, {
+        method: 'PUT', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(ap)
+      });
+    }
 
     return json(200, { ok: true, message: `「${filename}」上传成功！`, detail: '已提交到待审批区，等待管理员审批。', pending: true });
   } catch (e) { return json(500, { ok: false, error: e.message }); }
