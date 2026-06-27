@@ -146,11 +146,6 @@
           <option value="7-yuan">🔬 原 — 原子物理</option>
         </select>
 
-        <!-- 作者姓名 -->
-        <label class="form-label">作者姓名</label>
-        <input type="text" class="form-input" id="uploadAuthor"
-               placeholder="请输入你的姓名" autocomplete="off">
-
         <!-- 文件选择 -->
         <label class="form-label">选择 HTML 文件</label>
         <div class="file-drop-zone" id="fileDropZone">
@@ -294,7 +289,6 @@
               <span class="card-cat-badge" style="background:${cat.color}15;color:${cat.color}">
                 ${cat.emoji} ${cat.name}
               </span>
-              ${program.author ? '<span class="card-author">👤 ' + escapeHtml(program.author) + '</span>' : ''}
               <div class="card-footer">
                 <button class="btn-delete" title="删除此程序" data-action="delete">🗑</button>
                 <button class="btn-download" title="下载此程序" data-action="download">💾</button>
@@ -417,7 +411,6 @@
         if (!selectedFile) return;
 
         const category = document.getElementById('uploadCategory').value;
-        const author = document.getElementById('uploadAuthor').value.trim() || '匿名';
 
         // 显示加载状态
         btnSubmit.disabled = true;
@@ -437,8 +430,7 @@
           const body = {
             category: category,
             filename: selectedFile.name,
-            content: base64,
-            author: author
+            content: base64
           };
 
           const resp = await fetch('/upload', {
