@@ -73,6 +73,12 @@
           "title": "旋转圆",
           "path": "5-lizi/旋转圆.html",
           "author": ""
+        },
+        {
+          "file": "空间螺旋磁聚焦.html",
+          "title": "空间螺旋磁聚焦",
+          "path": "5-lizi/空间螺旋磁聚焦.html",
+          "author": ""
         }
       ],
       "description": "洛伦兹力、圆周运动、质谱仪等"
@@ -98,6 +104,6 @@
       "description": "玻尔模型、能级跃迁、原子核等"
     }
   ],
-  "totalPrograms": 4,
-  "updatedAt": "2026-06-27T13:44:33.172Z"
+  "totalPrograms": 5,
+  "updatedAt": "2026-06-27T13:44:42.023Z"
 }
