@@ -473,14 +473,14 @@ body {
    ========================================== */
 .header-top {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
 }
 
 .header-top > div:first-child {
-  text-align: left;
+  text-align: center;
 }
 
 .btn-upload {
