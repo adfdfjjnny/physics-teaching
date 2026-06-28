@@ -44,10 +44,10 @@
   <!-- 主内容区 -->
   <main class="main-content">
     <!-- 通知公告栏 -->
-    <div class="notice-bar" id="noticeBar" style="display:none;">
+    <div class="notice-bar" id="noticeBar">
       <div class="notice-content">
         <span class="notice-icon">📢</span>
-        <span class="notice-text" id="noticeText"></span>
+        <span class="notice-text" id="noticeText">暂无公告，点击右侧 ✏️ 发布</span>
         <span class="notice-time" id="noticeTime"></span>
       </div>
       <button class="notice-edit-btn" id="btnEditNotice" title="编辑公告">✏️</button>
@@ -1140,7 +1140,6 @@
           if (data.ok && data.notice && data.notice.text) {
             document.getElementById('noticeText').textContent = data.notice.text;
             document.getElementById('noticeTime').textContent = new Date(data.notice.updatedAt).toLocaleString('zh-CN');
-            document.getElementById('noticeBar').style.display = 'flex';
           }
         } catch (e) {}
       }
