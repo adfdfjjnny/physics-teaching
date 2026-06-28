@@ -9,6 +9,13 @@
       "desc": "牛顿定律、运动学、万有引力等",
       "programs": [
         {
+          "file": "test_q.html",
+          "title": "test q",
+          "path": "1-li/test_q.html",
+          "author": "",
+          "questionFile": "test.doc"
+        },
+        {
           "file": "test_with_q.html",
           "title": "test with q",
           "path": "1-li/test_with_q.html",
@@ -147,6 +154,6 @@
       "description": "玻尔模型、能级跃迁、原子核等"
     }
   ],
-  "totalPrograms": 9,
-  "updatedAt": "2026-06-28T15:30:31.290Z"
+  "totalPrograms": 10,
+  "updatedAt": "2026-06-28T15:30:40.707Z"
 }
