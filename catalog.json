@@ -9,6 +9,13 @@
       "desc": "牛顿定律、运动学、万有引力等",
       "programs": [
         {
+          "file": "test_with_q.html",
+          "title": "test with q",
+          "path": "1-li/test_with_q.html",
+          "author": "",
+          "questionFile": "test_question.doc"
+        },
+        {
           "file": "波的叠加.html",
           "title": "波的叠加",
           "path": "1-li/波的叠加.html",
@@ -140,6 +147,6 @@
       "description": "玻尔模型、能级跃迁、原子核等"
     }
   ],
-  "totalPrograms": 8,
-  "updatedAt": "2026-06-28T15:26:43.462Z"
+  "totalPrograms": 9,
+  "updatedAt": "2026-06-28T15:30:31.290Z"
 }
