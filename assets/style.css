@@ -1042,6 +1042,10 @@ body {
   background: var(--primary-bg);
 }
 
+.file-drop-zone-sm {
+  padding: 16px 20px;
+}
+
 .file-input-hidden {
   position: absolute;
   inset: 0;
