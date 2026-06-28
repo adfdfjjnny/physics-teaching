@@ -21,6 +21,13 @@
           "path": "1-li/滚轮线（摆线）.html",
           "author": "{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/repos/contents#get-repository-content\",\"status\":\"404\"}",
           "questionFile": ""
+        },
+        {
+          "file": "驻波演示.html",
+          "title": "驻波演示",
+          "path": "1-li/驻波演示.html",
+          "author": "{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/repos/contents#get-repository-content\",\"status\":\"404\"}",
+          "questionFile": "驻波题.jpg"
         }
       ],
       "description": "牛顿定律、运动学、万有引力等"
@@ -126,6 +133,6 @@
       "description": "玻尔模型、能级跃迁、原子核等"
     }
   ],
-  "totalPrograms": 6,
-  "updatedAt": "2026-06-28T15:26:02.203Z"
+  "totalPrograms": 7,
+  "updatedAt": "2026-06-28T15:26:23.877Z"
 }
