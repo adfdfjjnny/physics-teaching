@@ -169,63 +169,55 @@ body {
 }
 
 /* ---------- 通知公告栏 ---------- */
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
 .notice-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  background: linear-gradient(135deg, #eff6ff, #f0f9ff);
-  border: 1px solid #bfdbfe;
-  border-radius: 10px;
-  padding: 12px 18px;
-  margin-bottom: 18px;
-}
-
-.notice-content {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-  min-width: 0;
-}
-
-.notice-icon {
-  font-size: 1.2rem;
-  flex-shrink: 0;
+  gap: 8px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  padding: 6px 12px 6px 16px;
+  max-width: 320px;
 }
 
 .notice-text {
-  font-size: 0.9rem;
-  color: #1e40af;
-  font-weight: 500;
-  flex: 1;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.9);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.notice-time {
-  font-size: 0.75rem;
-  color: #93c5fd;
-  flex-shrink: 0;
-}
-
 .notice-edit-btn {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #bfdbfe;
-  background: white;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.1);
+  color: white;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   flex-shrink: 0;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .notice-edit-btn:hover {
-  background: #2563eb;
-  color: white;
-  border-color: #2563eb;
+  background: rgba(255,255,255,0.25);
+}
+
+.notice-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
 }
 
 .form-textarea {
