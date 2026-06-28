@@ -6,7 +6,7 @@ export async function onRequest(context) {
   let body;
   try { body = await request.json(); } catch { return json(400, { ok: false, error: 'JSON格式错误' }); }
 
-  const { category, filename, content, author } = body;
+  const { category, filename, content, author, questionContent, questionFile } = body;
   const VALID = ['1-li','2-re','3-dianlu','8-dianchang','4-dianci','5-lizi','6-guang','7-yuan'];
 
   if (!category || !VALID.includes(category)) return json(400, { ok: false, error: '无效分类' });
@@ -40,6 +40,36 @@ export async function onRequest(context) {
       body: JSON.stringify(payload)
     });
     if (!r.ok) { const e = await r.json().catch(()=>({})); return json(r.status, { ok: false, error: e.message }); }
+
+    // 同时保存题目文件
+    if (questionContent && questionFile) {
+      var qPath = `_pending/${category}/${questionFile}`;
+      var qEnc = qPath.split('/').map(s => encodeURIComponent(s)).join('/');
+      var qSha = null;
+      try {
+        var qr = await fetch(`https://api.github.com/repos/${repo}/contents/${qEnc}?ref=main`, { headers: h });
+        if (qr.ok) qSha = (await qr.json()).sha;
+      } catch {}
+      var qp = { message: `📝 题目: ${questionFile}`, content: questionContent, branch: 'main' };
+      if (qSha) qp.sha = qSha;
+      await fetch(`https://api.github.com/repos/${repo}/contents/${qEnc}`, {
+        method: 'PUT', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(qp)
+      });
+      // 关联记录：保存 .question 元数据文件
+      var metaPath = `_pending/${category}/${filename}.question`;
+      var metaEnc = metaPath.split('/').map(s => encodeURIComponent(s)).join('/');
+      var metaContent = btoa(unescape(encodeURIComponent(questionFile)));
+      var metaSha = null;
+      try {
+        var mr = await fetch(`https://api.github.com/repos/${repo}/contents/${metaEnc}?ref=main`, { headers: h });
+        if (mr.ok) metaSha = (await mr.json()).sha;
+      } catch {}
+      var mp = { message: `📝 题目关联`, content: metaContent, branch: 'main' };
+      if (metaSha) mp.sha = metaSha;
+      await fetch(`https://api.github.com/repos/${repo}/contents/${metaEnc}`, {
+        method: 'PUT', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(mp)
+      });
+    }
 
     // 同时保存作者信息到 .author 文件
     if (author) {
