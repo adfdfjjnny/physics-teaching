@@ -386,7 +386,7 @@
               </span>
               <div class="card-footer">
                 <button class="btn-download" title="下载程序" data-action="download">💾 程序</button>
-                ${program.questionFile ? '<a class="btn-download" title="下载试题：' + escapeHtml(program.questionFile) + '" href="https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + escapeHtml(cat.id + '/' + program.questionFile) + '" download style="text-decoration:none">📝 试题</a>' : ''}
+                ${program.questionFile ? '<a class="btn-download" title="下载试题：' + escapeHtml(program.questionFile) + '" href="' + escapeHtml(cat.id + '/' + program.questionFile) + '" download style="text-decoration:none">📝 试题</a>' : ''}
                 <button class="btn-comment" title="查看/添加评论" data-action="comment">💬</button>
                 <button class="btn-move" title="移动到其他板块" data-action="move">📦</button>
                 <button class="btn-delete" title="删除此程序" data-action="delete">🗑</button>
@@ -551,18 +551,21 @@
 
       // 打开程序：fetch HTML并以正确MIME渲染
       async function openProgram(filePath) {
-        const url = 'https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + filePath;
-        try {
-          const resp = await fetch(url);
-          if (!resp.ok) throw new Error('文件获取失败');
-          const html = await resp.text();
-          const w = window.open('', '_blank');
-          w.document.write(html);
-          w.document.close();
-        } catch (err) {
-          alert('打开失败：' + err.message + '\n\n尝试直接链接...');
-          window.open(url, '_blank');
+        // 先尝试本地（快），再尝试 CDN
+        var urls = [filePath, 'https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + filePath];
+        for (var i = 0; i < urls.length; i++) {
+          try {
+            var resp = await fetch(urls[i]);
+            if (resp.ok) {
+              var html = await resp.text();
+              var w = window.open('', '_blank');
+              w.document.write(html);
+              w.document.close();
+              return;
+            }
+          } catch (e) {}
         }
+        window.open(filePath, '_blank');
       }
 
       // ========================================
@@ -601,8 +604,8 @@
 
         // 触发下载
         try {
-          const dlUrl = 'https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + path;
-          const resp = await fetch(dlUrl);
+          // 本地优先
+          var resp = await fetch(path).catch(function() { return fetch('https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + path); });
           if (!resp.ok) throw new Error('文件获取失败');
           const blob = await resp.blob();
           const url = URL.createObjectURL(blob);
@@ -999,17 +1002,24 @@
             observer.unobserve(el);
             var path = el.dataset.preview;
             if (!path) return;
-            var url = 'https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + path;
-            fetch(url).then(function(r) { return r.text(); }).then(function(html) {
-              var iframe = document.createElement('iframe');
-              iframe.className = 'preview-frame';
-              iframe.sandbox = 'allow-scripts allow-same-origin';
-              iframe.scrolling = 'no';
-              iframe.srcdoc = html;
-              iframe.onload = function() { iframe.style.opacity = '1'; };
-              el.innerHTML = '';
-              el.appendChild(iframe);
-            }).catch(function() {
+            var urls = [path, 'https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + path];
+            var tryFetch = function(i) {
+              if (i >= urls.length) { el.innerHTML = '<div class="preview-error">⏳</div>'; return; }
+              fetch(urls[i]).then(function(r) {
+                if (!r.ok) throw new Error();
+                return r.text();
+              }).then(function(html) {
+                var iframe = document.createElement('iframe');
+                iframe.className = 'preview-frame';
+                iframe.sandbox = 'allow-scripts allow-same-origin';
+                iframe.scrolling = 'no';
+                iframe.srcdoc = html;
+                iframe.onload = function() { iframe.style.opacity = '1'; };
+                el.innerHTML = '';
+                el.appendChild(iframe);
+              }).catch(function() { tryFetch(i + 1); });
+            };
+            tryFetch(0);
               el.innerHTML = '<div class="preview-error">⏳</div>';
             });
           });
