@@ -115,19 +115,22 @@ function scanCategory(cat) {
   htmlFiles.sort((a, b) => a.localeCompare(b, 'zh-CN'));
 
   for (const file of htmlFiles) {
-    // 尝试读取作者信息
-    let author = '';
-    const authorFile = path.join(dirPath, file + '.author');
-    if (fs.existsSync(authorFile)) {
-      try {
-        author = fs.readFileSync(authorFile, 'utf-8').trim();
-      } catch {}
+    // 尝试读取作者和题目信息
+    let author = '', questionFile = '';
+    const authorFilePath = path.join(dirPath, file + '.author');
+    if (fs.existsSync(authorFilePath)) {
+      try { author = fs.readFileSync(authorFilePath, 'utf-8').trim(); } catch {}
+    }
+    const questionFilePath = path.join(dirPath, file + '.question');
+    if (fs.existsSync(questionFilePath)) {
+      try { questionFile = fs.readFileSync(questionFilePath, 'utf-8').trim(); } catch {}
     }
     programs.push({
       file: file,
       title: filenameToTitle(file),
       path: `${cat.id}/${file}`,
-      author: author || ''
+      author: author || '',
+      questionFile: questionFile || ''
     });
   }
 
