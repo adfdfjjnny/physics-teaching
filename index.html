@@ -29,8 +29,11 @@
         </div>
         <div class="header-right">
           <div class="notice-bar" id="noticeBar">
-            <span class="notice-text" id="noticeText">暂无公告</span>
-            <button class="notice-edit-btn" id="btnEditNotice" title="编辑公告">✏️</button>
+            <div class="notice-title-bar">
+              <span>📢 公告栏</span>
+              <button class="notice-edit-btn" id="btnEditNotice" title="编辑公告">✏️</button>
+            </div>
+            <div class="notice-body" id="noticeText">暂无公告，点击 ✏️ 编辑发布</div>
           </div>
         </div>
       </div>
@@ -184,6 +187,28 @@
           <button class="btn-danger" id="btnConfirmMove">确认移动</button>
         </div>
         <div class="upload-status" id="moveStatus" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================== -->
+  <!-- 评论弹窗                                  -->
+  <!-- ======================================== -->
+  <div class="modal-overlay" id="commentModal" style="display:none;">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h2>💬 评论 — <span id="commentFileName"></span></h2>
+        <button class="modal-close" id="btnCloseComment">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="comment-list" id="commentList">
+          <p style="color:#94a3b8;text-align:center">加载中...</p>
+        </div>
+        <div class="comment-form">
+          <input type="text" class="form-input" id="commentName" placeholder="你的名字（选填）" autocomplete="off" style="margin-bottom:8px">
+          <textarea class="form-textarea" id="commentMessage" rows="2" placeholder="写评论..."></textarea>
+          <button class="btn-submit" id="btnSendComment">发送评论</button>
+        </div>
       </div>
     </div>
   </div>
@@ -352,6 +377,7 @@
                 ${cat.emoji} ${cat.name}
               </span>
               <div class="card-footer">
+                <button class="btn-comment" title="查看/添加评论" data-action="comment">💬</button>
                 <button class="btn-move" title="移动到其他板块" data-action="move">📦</button>
                 <button class="btn-delete" title="删除此程序" data-action="delete">🗑</button>
                 <button class="btn-download" title="下载此程序" data-action="download">💾</button>
@@ -598,6 +624,13 @@
           try { moveTarget = JSON.parse(card.dataset.program); } catch { return; }
           openMoveModal();
         }
+
+        if (btn.dataset.action === 'comment') {
+          const card = btn.closest('.card');
+          if (!card) return;
+          try { commentTarget = JSON.parse(card.dataset.program); } catch { return; }
+          openCommentModal();
+        }
       });
 
       async function checkDeletePasswordRequired() {
@@ -742,6 +775,71 @@
       }
 
             // ========================================
+      // 评论功能
+      // ========================================
+      var commentModal = document.getElementById('commentModal');
+      var commentTarget = null;
+
+      function openCommentModal() {
+        if (!commentTarget) return;
+        document.getElementById('commentFileName').textContent = commentTarget.filename;
+        document.getElementById('commentList').innerHTML = '<p style="color:#94a3b8;text-align:center">加载中...</p>';
+        document.getElementById('commentName').value = '';
+        document.getElementById('commentMessage').value = '';
+        commentModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        loadComments();
+      }
+
+      document.getElementById('btnCloseComment').addEventListener('click', function() {
+        commentModal.style.display = 'none'; document.body.style.overflow = '';
+      });
+      commentModal.addEventListener('click', function(e) { if (e.target === commentModal) { commentModal.style.display = 'none'; document.body.style.overflow = ''; } });
+
+      async function loadComments() {
+        if (!commentTarget) return;
+        try {
+          var resp = await fetch('/comments?cat=' + commentTarget.category + '&file=' + commentTarget.filename);
+          var data = await resp.json();
+          var list = document.getElementById('commentList');
+          if (data.ok && data.comments.length > 0) {
+            list.innerHTML = data.comments.map(function(c) {
+              return '<div class="comment-item"><div class="comment-meta"><strong>' + escapeHtml(c.name) + '</strong> · <span>' + new Date(c.time).toLocaleString('zh-CN') + '</span></div><div class="comment-msg">' + escapeHtml(c.message) + '</div></div>';
+            }).join('');
+          } else {
+            list.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px">暂无评论，来说两句吧</p>';
+          }
+        } catch (e) { document.getElementById('commentList').innerHTML = '<p style="color:#dc2626">加载失败</p>'; }
+      }
+
+      document.getElementById('btnSendComment').addEventListener('click', async function() {
+        if (!commentTarget) return;
+        var name = document.getElementById('commentName').value.trim();
+        var message = document.getElementById('commentMessage').value.trim();
+        if (!message) { alert('请输入评论内容'); return; }
+
+        document.getElementById('btnSendComment').disabled = true;
+        document.getElementById('btnSendComment').textContent = '发送中...';
+
+        try {
+          var resp = await fetch('/comments?cat=' + commentTarget.category + '&file=' + commentTarget.filename, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name || '匿名', message: message })
+          });
+          var data = await resp.json();
+          if (data.ok) {
+            document.getElementById('commentMessage').value = '';
+            loadComments();
+          } else {
+            alert('发送失败: ' + (data.error || ''));
+          }
+        } catch (e) { alert('网络错误'); }
+        document.getElementById('btnSendComment').disabled = false;
+        document.getElementById('btnSendComment').textContent = '发送评论';
+      });
+
+      // ========================================
       // 移动功能
       // ========================================
       const moveModal = document.getElementById('moveModal');
@@ -1080,7 +1178,9 @@
 
       loadNotice();
       document.getElementById('btnEditNotice').addEventListener('click', function() {
-        document.getElementById('noticeInput').value = (document.getElementById('noticeText').textContent || '').replace(/^📢 /,'');
+        var currentText = document.getElementById('noticeText').textContent;
+        if (currentText === '暂无公告，点击 ✏️ 编辑发布') currentText = '';
+        document.getElementById('noticeInput').value = currentText;
         document.getElementById('noticeAuthor').value = '管理员';
         document.getElementById('noticePassword').value = '';
         document.getElementById('noticeStatus').style.display = 'none';
