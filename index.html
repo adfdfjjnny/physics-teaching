@@ -224,7 +224,6 @@
       </div>
 
       <div class="modal-body">
-        <!-- 分类选择 -->
         <label class="form-label">选择分类</label>
         <select class="form-select" id="uploadCategory">
           <option value="1-li">🍎 力 — 力学</option>
@@ -237,49 +236,20 @@
           <option value="7-yuan">🔬 原 — 原子物理</option>
         </select>
 
-        <!-- 文件选择 -->
-        <label class="form-label">① 选择 HTML 程序文件</label>
-        <div class="file-drop-zone" id="fileDropZone">
-          <input type="file" id="uploadFile" accept=".html,.htm" class="file-input-hidden">
-          <div class="file-drop-content">
-            <span class="file-drop-icon">📁</span>
-            <span id="fileDropText">点击选择，或拖拽 .html 文件到此处</span>
-            <span class="file-drop-hint">最大 5MB</span>
-          </div>
-        </div>
-        <div class="file-preview" id="filePreview" style="display:none;">
-          <span class="file-preview-icon">📄</span>
-          <span class="file-preview-name" id="filePreviewName"></span>
-          <button class="file-remove" id="btnRemoveFile">✕</button>
+        <div id="uploadPairs">
+          <!-- 动态生成上传行 -->
         </div>
 
-        <label class="form-label">② 题目附件（可选，Word/JPG/PDF）</label>
-        <div class="file-drop-zone file-drop-zone-sm" id="questionDropZone">
-          <input type="file" id="questionFile" accept=".doc,.docx,.jpg,.jpeg,.png,.pdf" class="file-input-hidden">
-          <div class="file-drop-content">
-            <span class="file-drop-icon">📎</span>
-            <span id="questionDropText">点击选择题目文件（与该程序配对）</span>
-            <span class="file-drop-hint">最大 10MB</span>
-          </div>
-        </div>
-        <div class="file-preview" id="questionPreview" style="display:none;">
-          <span class="file-preview-icon">📝</span>
-          <span class="file-preview-name" id="questionPreviewName"></span>
-          <button class="file-remove" id="btnRemoveQuestion">✕</button>
-        </div>
+        <button class="btn-add-pair" id="btnAddPair">➕ 添加一组</button>
 
-        <!-- 上传状态提示 -->
         <div class="upload-status" id="uploadStatus" style="display:none;"></div>
 
-        <!-- 提交按钮 -->
         <button class="btn-submit" id="btnSubmitUpload" disabled>
           <span id="btnSubmitText">上传到服务器</span>
           <span class="spinner" id="uploadSpinner" style="display:none;"></span>
         </button>
 
-        <p class="upload-note">
-          上传后文件将自动提交到 GitHub，约 1-2 分钟后在首页可见。
-        </p>
+        <p class="upload-note">每组一个 HTML 程序 + 一个题目附件（可选），一一配对上传</p>
       </div>
     </div>
   </div>
@@ -434,133 +404,17 @@
       }
 
       // ========================================
-      // 上传功能
+      // 上传功能（多组一对一配对）
       // ========================================
       const modal = document.getElementById('uploadModal');
-      const fileInput = document.getElementById('uploadFile');
-      const dropZone = document.getElementById('fileDropZone');
-      const filePreview = document.getElementById('filePreview');
-      const filePreviewName = document.getElementById('filePreviewName');
-      const fileDropText = document.getElementById('fileDropText');
-      const questionFile = document.getElementById('questionFile');
-      const questionDropZone = document.getElementById('questionDropZone');
-      const questionPreview = document.getElementById('questionPreview');
-      const questionPreviewName = document.getElementById('questionPreviewName');
-      const questionDropText = document.getElementById('questionDropText');
-      const btnSubmit = document.getElementById('btnSubmitUpload');
-      const btnSubmitText = document.getElementById('btnSubmitText');
+      // 上传功能见 assets/upload.js
       const uploadSpinner = document.getElementById('uploadSpinner');
       const uploadStatus = document.getElementById('uploadStatus');
-      let selectedFile = null;
-      let selectedQuestionFile = null;
+      const uploadPairs = document.getElementById('uploadPairs');
+      // 所有上传逻辑由 assets/upload.js 处理
+      // 仅保留 Toast 和 formatSize 供复用
 
-      // 打开弹窗
-      document.getElementById('btnOpenUpload').addEventListener('click', () => {
-        resetUploadForm();
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-      });
 
-      // 关闭弹窗
-      document.getElementById('btnCloseUpload').addEventListener('click', closeModal);
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
-      });
-
-      function closeModal() {
-        modal.style.display = 'none';
-        document.body.style.overflow = '';
-        resetUploadForm();
-      }
-
-      function resetUploadForm() {
-        fileInput.value = ''; selectedFile = null;
-        filePreview.style.display = 'none';
-        fileDropText.textContent = '点击选择，或拖拽 .html 文件到此处';
-        fileDropText.className = '';
-        questionFile.value = ''; selectedQuestionFile = null;
-        questionPreview.style.display = 'none';
-        questionDropText.textContent = '点击选择题目文件（与该程序配对）';
-        questionDropText.className = '';
-        btnSubmit.disabled = true;
-        uploadStatus.style.display = 'none';
-        uploadStatus.className = 'upload-status';
-        uploadStatus.textContent = '';
-        btnSubmitText.textContent = '上传到服务器';
-        uploadSpinner.style.display = 'none';
-      }
-
-      // 文件选择：click
-      dropZone.addEventListener('click', () => fileInput.click());
-      questionDropZone.addEventListener('click', () => questionFile.click());
-
-      // HTML 文件选择
-      fileInput.addEventListener('change', function() {
-        if (fileInput.files.length > 0) handleHtmlFile(fileInput.files[0]);
-      });
-      dropZone.addEventListener('dragover', function(e) { e.preventDefault(); dropZone.classList.add('dragover'); });
-      dropZone.addEventListener('dragleave', function() { dropZone.classList.remove('dragover'); });
-      dropZone.addEventListener('drop', function(e) { e.preventDefault(); dropZone.classList.remove('dragover'); if (e.dataTransfer.files.length > 0) handleHtmlFile(e.dataTransfer.files[0]); });
-
-      function handleHtmlFile(f) {
-        if (!f.name.match(/\.html?$/i)) { alert('请选择 .html 文件'); return; }
-        if (f.size > 5*1024*1024) { alert('文件不能超过 5MB'); return; }
-        selectedFile = f;
-        filePreview.style.display = 'flex';
-        filePreviewName.textContent = f.name + ' (' + formatSize(f.size) + ')';
-        fileDropText.textContent = '✅ 已选择';
-        fileDropText.className = 'text-success';
-        btnSubmit.disabled = false;
-      }
-
-      document.getElementById('btnRemoveFile').addEventListener('click', function(e) {
-        e.stopPropagation(); e.preventDefault();
-        fileInput.value = ''; selectedFile = null;
-        filePreview.style.display = 'none';
-        fileDropText.textContent = '点击选择，或拖拽 .html 文件到此处';
-        fileDropText.className = '';
-        btnSubmit.disabled = true;
-      });
-
-      // 题目文件选择
-      questionFile.addEventListener('change', function() {
-        if (questionFile.files.length > 0) {
-          var f = questionFile.files[0];
-          if (f.size > 10*1024*1024) { alert('题目文件不能超过 10MB'); return; }
-          selectedQuestionFile = f;
-          questionPreview.style.display = 'flex';
-          questionPreviewName.textContent = f.name + ' (' + formatSize(f.size) + ')';
-          questionDropText.textContent = '✅ 已选择';
-          questionDropText.className = 'text-success';
-        }
-      });
-
-      document.getElementById('btnRemoveQuestion').addEventListener('click', function(e) {
-        e.stopPropagation(); e.preventDefault();
-        questionFile.value = ''; selectedQuestionFile = null;
-        questionPreview.style.display = 'none';
-        questionDropText.textContent = '点击选择题目文件（与该程序配对）';
-        questionDropText.className = '';
-      });
-
-      function formatSize(bytes) {
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-      }
-
-      // 提交上传（单程序 + 单题目配对）
-      btnSubmit.addEventListener('click', async () => {
-        if (!selectedFile) return;
-        const category = document.getElementById('uploadCategory').value;
-        btnSubmit.disabled = true;
-        uploadSpinner.style.display = 'inline-block';
-        uploadStatus.style.display = 'block';
-        uploadStatus.className = 'upload-status status-info';
-        uploadStatus.textContent = '⏳ 正在上传: ' + selectedFile.name;
-
-        try {
-          var base64 = await readFileAsBase64(selectedFile);
           var body = { category: category, filename: selectedFile.name, content: base64 };
           if (selectedQuestionFile) {
             body.questionContent = await readFileAsBase64(selectedQuestionFile);
@@ -1307,5 +1161,6 @@
       loadCatalog();
     })();
   </script>
+  <script src="assets/upload.js"></script>
 </body>
 </html>
