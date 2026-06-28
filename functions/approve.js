@@ -45,6 +45,34 @@ export async function onRequest(context) {
       body: JSON.stringify({ message: `✅ 已审批: ${filename}`, sha: info.sha, branch: 'main' })
     });
 
+    // 3.5 移动题目文件和关联信息
+    try {
+      // 读取 .question 元数据获取题目文件名
+      var qMetaResp = await fetch(`https://api.github.com/repos/${repo}/contents/${enc(`_pending/${category}/${filename}.question`)}?ref=main`, { headers: h });
+      if (qMetaResp.ok) {
+        var qMeta = await qMetaResp.json();
+        var questionFile = decodeURIComponent(escape(atob(qMeta.content)));
+        // 移动题目文件
+        var qSrcResp = await fetch(`https://api.github.com/repos/${repo}/contents/${enc(`_pending/${category}/${questionFile}`)}?ref=main`, { headers: h });
+        if (qSrcResp.ok) {
+          var qSrc = await qSrcResp.json();
+          var qTargetSha = null;
+          try { var qtr = await fetch(`https://api.github.com/repos/${repo}/contents/${enc(`${category}/${questionFile}`)}?ref=main`,{headers:h}); if (qtr.ok) qTargetSha = (await qtr.json()).sha; } catch {}
+          var qBody = { message: `✅ 审批题目: ${questionFile}`, content: qSrc.content, branch: 'main' };
+          if (qTargetSha) qBody.sha = qTargetSha;
+          await fetch(`https://api.github.com/repos/${repo}/contents/${enc(`${category}/${questionFile}`)}`, { method: 'PUT', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(qBody) });
+          await fetch(`https://api.github.com/repos/${repo}/contents/${enc(`_pending/${category}/${questionFile}`)}`, { method: 'DELETE', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: '✅ 已移动', sha: qSrc.sha, branch: 'main' }) });
+        }
+        // 移动 .question 元数据
+        var mTargetSha = null;
+        try { var mtr = await fetch(`https://api.github.com/repos/${repo}/contents/${enc(`${category}/${filename}.question`)}?ref=main`,{headers:h}); if (mtr.ok) mTargetSha = (await mtr.json()).sha; } catch {}
+        var mBody = { message: `✅ 审批题目关联`, content: qMeta.content, branch: 'main' };
+        if (mTargetSha) mBody.sha = mTargetSha;
+        await fetch(`https://api.github.com/repos/${repo}/contents/${enc(`${category}/${filename}.question`)}`, { method: 'PUT', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(mBody) });
+        await fetch(`https://api.github.com/repos/${repo}/contents/${enc(`_pending/${category}/${filename}.question`)}`, { method: 'DELETE', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: '✅ 已移动', sha: qMeta.sha, branch: 'main' }) });
+      }
+    } catch (e) { console.log('question move error:', e); }
+
     // 4. 重新生成 catalog.json 并上传到 GitHub
     try {
       await rebuildCatalog(token, repo);
@@ -83,16 +111,16 @@ async function rebuildCatalog(token, repo) {
         if (Array.isArray(files)) {
           for (const f of files) {
             if (/\.html?$/i.test(f.name) && !f.name.startsWith('.')) {
-              // 尝试读取作者信息
-              let author = '';
+              let author = '', questionFile = '';
               try {
                 const ar = await fetch(`https://api.github.com/repos/${repo}/contents/${encodeURIComponent(cat.id + '/' + f.name + '.author')}?ref=main`, { headers: h });
-                if (ar.ok) {
-                  const aj = await ar.json();
-                  author = decodeURIComponent(escape(atob(aj.content)));
-                }
+                if (ar.ok) { const aj = await ar.json(); author = decodeURIComponent(escape(atob(aj.content))); }
               } catch {}
-              programs.push({ file: f.name, title: f.name.replace(/\.html?$/i,'').replace(/[-_.]/g,' ').replace(/\s+/g,' ').trim(), path: `${cat.id}/${f.name}`, author: author || '' });
+              try {
+                const qr = await fetch(`https://api.github.com/repos/${repo}/contents/${encodeURIComponent(cat.id + '/' + f.name + '.question')}?ref=main`, { headers: h });
+                if (qr.ok) { const qj = await qr.json(); questionFile = decodeURIComponent(escape(atob(qj.content))); }
+              } catch {}
+              programs.push({ file: f.name, title: f.name.replace(/\.html?$/i,'').replace(/[-_.]/g,' ').replace(/\s+/g,' ').trim(), path: `${cat.id}/${f.name}`, author: author || '', questionFile: questionFile || '' });
             }
           }
         }
