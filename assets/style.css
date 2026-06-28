@@ -177,33 +177,44 @@ body {
 }
 
 .notice-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 20px;
-  padding: 6px 12px 6px 16px;
-  max-width: 320px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 12px;
+  width: 280px;
+  min-height: 140px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  overflow: hidden;
 }
 
-.notice-text {
-  font-size: 0.82rem;
-  color: rgba(255,255,255,0.9);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.notice-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.notice-body {
+  padding: 14px 16px;
+  font-size: 0.9rem;
+  color: #1e293b;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .notice-edit-btn {
-  width: 26px;
-  height: 26px;
-  border: 1px solid rgba(255,255,255,0.25);
-  background: rgba(255,255,255,0.1);
-  color: white;
-  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   flex-shrink: 0;
   transition: all 0.2s;
   display: flex;
@@ -212,7 +223,9 @@ body {
 }
 
 .notice-edit-btn:hover {
-  background: rgba(255,255,255,0.25);
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
 }
 
 .notice-icon {
@@ -444,6 +457,63 @@ body {
   background: #fefce8;
   color: #ca8a04;
   border-color: #fde68a;
+}
+
+/* 评论按钮 */
+.btn-comment {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e2e8f0;
+  background: var(--bg);
+  color: #94a3b8;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.btn-comment:hover {
+  background: #eef2ff;
+  color: #6366f1;
+  border-color: #c7d2fe;
+}
+
+/* 评论列表 */
+.comment-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.comment-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.comment-meta {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.comment-meta strong {
+  color: #334155;
+}
+
+.comment-msg {
+  font-size: 0.88rem;
+  color: #1e293b;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.comment-form {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 12px;
 }
 
 .card-cat-badge {
@@ -686,13 +756,13 @@ body {
 .btn-upload {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 22px;
+  gap: 8px;
+  padding: 12px 28px;
   background: rgba(255,255,255,0.15);
   color: white;
   border: 1.5px solid rgba(255,255,255,0.3);
   border-radius: 24px;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -715,13 +785,13 @@ body {
 .btn-approve {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 22px;
+  gap: 8px;
+  padding: 12px 28px;
   background: rgba(255,255,255,0.15);
   color: white;
   border: 1.5px solid rgba(255,255,255,0.3);
   border-radius: 24px;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
