@@ -34,7 +34,7 @@
           "title": "驻波演示",
           "path": "1-li/驻波演示.html",
           "author": "{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/repos/contents#get-repository-content\",\"status\":\"404\"}",
-          "questionFile": ""
+          "questionFile": "驻波题.jpg"
         }
       ],
       "description": "牛顿定律、运动学、万有引力等"
@@ -149,5 +149,5 @@
     }
   ],
   "totalPrograms": 9,
-  "updatedAt": "2026-06-28T14:23:49.169Z"
+  "updatedAt": "2026-06-28T14:23:52.633Z"
 }
