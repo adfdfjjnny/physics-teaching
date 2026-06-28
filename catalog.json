@@ -82,7 +82,15 @@
       "emoji": "💡",
       "color": "#f97316",
       "desc": "几何光学、波动光学、干涉衍射等",
-      "programs": [],
+      "programs": [
+        {
+          "file": "多普勒效应演示终版.html",
+          "title": "多普勒效应演示终版",
+          "path": "6-guang/多普勒效应演示终版.html",
+          "author": "",
+          "questionFile": ""
+        }
+      ],
       "description": "几何光学、波动光学、干涉衍射等"
     },
     {
@@ -96,6 +104,6 @@
       "description": "玻尔模型、能级跃迁、原子核等"
     }
   ],
-  "totalPrograms": 2,
-  "updatedAt": "2026-06-28T15:25:46.606Z"
+  "totalPrograms": 3,
+  "updatedAt": "2026-06-28T15:25:49.638Z"
 }
