@@ -66,6 +66,13 @@
           "path": "8-dianchang/示玻管3D.html",
           "author": "",
           "questionFile": ""
+        },
+        {
+          "file": "空间螺旋磁聚焦.html",
+          "title": "空间螺旋磁聚焦",
+          "path": "8-dianchang/空间螺旋磁聚焦.html",
+          "author": "",
+          "questionFile": "26.6湖州高二期末压轴题.jpg"
         }
       ],
       "description": "电场强度、电场线、电势、电容器等"
@@ -119,6 +126,6 @@
       "description": "玻尔模型、能级跃迁、原子核等"
     }
   ],
-  "totalPrograms": 5,
-  "updatedAt": "2026-06-28T15:25:55.510Z"
+  "totalPrograms": 6,
+  "updatedAt": "2026-06-28T15:26:02.203Z"
 }
