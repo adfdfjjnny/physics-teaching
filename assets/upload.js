@@ -1,4 +1,4 @@
-// 上传功能（多组一对一配对）
+// 上传功能（多组一对一配对 + 拖拽上传）
 var uploadModal__ = document.getElementById('uploadModal');
 var uploadPairs__ = document.getElementById('uploadPairs');
 var btnSubmit__ = document.getElementById('btnSubmitUpload');
@@ -40,14 +40,14 @@ function addPair__() {
     '<div class="pair-header"><strong>#' + id + '</strong> <button class="pair-remove" data-pid="' + id + '" style="display:none">✕</button></div>' +
     '<label class="form-label-sm">HTML 程序</label>' +
     '<div class="file-drop-zone file-drop-zone-sm" id="htmlZone' + id + '">' +
-    '<input type="file" id="htmlFile' + id + '" accept=".html,.htm" class="file-input-hidden">' +
-    '<div class="file-drop-content"><span class="file-drop-icon">📁</span><span id="htmlText' + id + '">点击选择 .html 文件</span></div></div>' +
+    '<input type="file" id="htmlFile' + id + '" accept=".html,.htm" class="file-input-native">' +
+    '<div class="file-drop-content" style="pointer-events:none"><span class="file-drop-icon">📁</span><span id="htmlText' + id + '">点击选择或拖拽 .html 文件</span></div></div>' +
     '<div class="file-preview" id="htmlPreview' + id + '" style="display:none">' +
     '<span class="file-preview-icon">📄</span><span class="file-preview-name" id="htmlName' + id + '"></span></div>' +
     '<label class="form-label-sm">📝 题目附件（可选）</label>' +
     '<div class="file-drop-zone file-drop-zone-sm" id="qZone' + id + '">' +
-    '<input type="file" id="qFile' + id + '" accept=".doc,.docx,.jpg,.jpeg,.png,.pdf" class="file-input-hidden">' +
-    '<div class="file-drop-content"><span class="file-drop-icon">📎</span><span id="qText' + id + '">点击选择题目文件</span></div></div>' +
+    '<input type="file" id="qFile' + id + '" accept=".doc,.docx,.jpg,.jpeg,.png,.pdf" class="file-input-native">' +
+    '<div class="file-drop-content" style="pointer-events:none"><span class="file-drop-icon">📎</span><span id="qText' + id + '">点击选择或拖拽题目文件</span></div></div>' +
     '<div class="file-preview" id="qPreview' + id + '" style="display:none">' +
     '<span class="file-preview-icon">📝</span><span class="file-preview-name" id="qName' + id + '"></span></div>';
   uploadPairs__.appendChild(div);
@@ -55,9 +55,32 @@ function addPair__() {
   var htmlInput = document.getElementById('htmlFile' + id);
   var qInput = document.getElementById('qFile' + id);
   var removeBtn = div.querySelector('.pair-remove');
+  var htmlZone = document.getElementById('htmlZone' + id);
+  var qZone = document.getElementById('qZone' + id);
 
-  document.getElementById('htmlZone' + id).onclick = function() { htmlInput.click(); };
-  document.getElementById('qZone' + id).onclick = function() { qInput.click(); };
+  // 不需要 onclick —— file-input-native 覆盖整个区域，直接点击即可
+  // 拖拽支持
+  htmlZone.addEventListener('dragover', function(e) { e.preventDefault(); htmlZone.classList.add('dragover'); });
+  htmlZone.addEventListener('dragleave', function() { htmlZone.classList.remove('dragover'); });
+  htmlZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    htmlZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) {
+      htmlInput.files = e.dataTransfer.files;
+      htmlInput.dispatchEvent(new Event('change'));
+    }
+  });
+
+  qZone.addEventListener('dragover', function(e) { e.preventDefault(); qZone.classList.add('dragover'); });
+  qZone.addEventListener('dragleave', function() { qZone.classList.remove('dragover'); });
+  qZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    qZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) {
+      qInput.files = e.dataTransfer.files;
+      qInput.dispatchEvent(new Event('change'));
+    }
+  });
 
   htmlInput.onchange = function() {
     if (htmlInput.files.length > 0) {
