@@ -43,6 +43,37 @@
 
   <!-- 主内容区 -->
   <main class="main-content">
+    <!-- 通知公告栏 -->
+    <div class="notice-bar" id="noticeBar" style="display:none;">
+      <div class="notice-content">
+        <span class="notice-icon">📢</span>
+        <span class="notice-text" id="noticeText"></span>
+        <span class="notice-time" id="noticeTime"></span>
+      </div>
+      <button class="notice-edit-btn" id="btnEditNotice" title="编辑公告">✏️</button>
+    </div>
+
+    <!-- 编辑公告弹窗 -->
+    <div class="modal-overlay" id="noticeModal" style="display:none;">
+      <div class="modal-panel modal-panel-sm">
+        <div class="modal-header">
+          <h2>📢 编辑公告</h2>
+          <button class="modal-close" id="btnCloseNotice">&times;</button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label">公告内容</label>
+          <textarea class="form-textarea" id="noticeInput" rows="4"
+                    placeholder="输入公告内容，支持纯文本..."></textarea>
+          <label class="form-label">发布人</label>
+          <input type="text" class="form-input" id="noticeAuthor" placeholder="管理员" autocomplete="off">
+          <label class="form-label">管理员密码</label>
+          <input type="password" class="form-input" id="noticePassword" placeholder="请输入管理员密码" autocomplete="off">
+          <button class="btn-submit" id="btnSaveNotice">发布公告</button>
+          <div class="upload-status" id="noticeStatus" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="category-header" id="categoryHeader">
       <h2 class="category-title" id="categoryTitle">全部程序</h2>
       <p class="category-desc" id="categoryDesc"></p>
@@ -1009,6 +1040,7 @@
           if (deleteModal.style.display === 'flex') closeDeleteModal();
           if (approveModal.style.display === 'flex') closeApproveModal();
           if (moveModal.style.display === 'flex') closeMoveModal();
+          if (noticeModal.style.display === 'flex') { noticeModal.style.display = 'none'; document.body.style.overflow = ''; }
         }
       });
       document.addEventListener('keydown', (e) => {
@@ -1046,6 +1078,72 @@
         origShowCategory(catId);
         setTimeout(loadPreviews, 300);
       };
+
+      // ============ 通知公告 ============
+      var noticeModal = document.getElementById('noticeModal');
+
+      loadNotice();
+      document.getElementById('btnEditNotice').addEventListener('click', function() {
+        document.getElementById('noticeInput').value = (document.getElementById('noticeText').textContent || '').replace(/^📢 /,'');
+        document.getElementById('noticeAuthor').value = '管理员';
+        document.getElementById('noticePassword').value = '';
+        document.getElementById('noticeStatus').style.display = 'none';
+        noticeModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      });
+      document.getElementById('btnCloseNotice').addEventListener('click', function() {
+        noticeModal.style.display = 'none';
+        document.body.style.overflow = '';
+      });
+      noticeModal.addEventListener('click', function(e) { if (e.target === noticeModal) { noticeModal.style.display = 'none'; document.body.style.overflow = ''; } });
+
+      document.getElementById('btnSaveNotice').addEventListener('click', async function() {
+        var text = document.getElementById('noticeInput').value.trim();
+        var author = document.getElementById('noticeAuthor').value.trim() || '管理员';
+        var password = document.getElementById('noticePassword').value;
+        var status = document.getElementById('noticeStatus');
+        if (!text) { alert('请输入公告内容'); return; }
+        if (!password) { alert('请输入管理员密码'); return; }
+
+        status.style.display = 'block';
+        status.className = 'upload-status status-info';
+        status.textContent = '⏳ 发布中...';
+
+        try {
+          var resp = await fetch('/notice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text, author: author, password: password })
+          });
+          var data = await resp.json();
+          if (data.ok) {
+            status.className = 'upload-status status-success';
+            status.textContent = '✅ 公告已发布';
+            document.getElementById('noticeText').textContent = data.notice.text;
+            document.getElementById('noticeTime').textContent = new Date(data.notice.updatedAt).toLocaleString('zh-CN');
+            document.getElementById('noticeBar').style.display = 'flex';
+            setTimeout(function() { noticeModal.style.display = 'none'; document.body.style.overflow = ''; }, 1500);
+          } else {
+            status.className = 'upload-status status-error';
+            status.textContent = '❌ ' + (data.error || '发布失败');
+          }
+        } catch (e) {
+          status.className = 'upload-status status-error';
+          status.textContent = '❌ 网络错误';
+        }
+      });
+
+      async function loadNotice() {
+        try {
+          var resp = await fetch('/notice');
+          var data = await resp.json();
+          if (data.ok && data.notice && data.notice.text) {
+            document.getElementById('noticeText').textContent = data.notice.text;
+            document.getElementById('noticeTime').textContent = new Date(data.notice.updatedAt).toLocaleString('zh-CN');
+            document.getElementById('noticeBar').style.display = 'flex';
+          }
+        } catch (e) {}
+      }
 
       // ============ 访问计数 ============
       fetch('/counter').then(function(r) { return r.json(); }).then(function(d) {
