@@ -238,28 +238,32 @@
         </select>
 
         <!-- 文件选择 -->
-        <label class="form-label">选择 HTML 程序文件（可多选）</label>
+        <label class="form-label">① 选择 HTML 程序文件</label>
         <div class="file-drop-zone" id="fileDropZone">
-          <input type="file" id="uploadFile" accept=".html,.htm" class="file-input-hidden" multiple>
+          <input type="file" id="uploadFile" accept=".html,.htm" class="file-input-hidden">
           <div class="file-drop-content">
             <span class="file-drop-icon">📁</span>
-            <span id="fileDropText">点击选择文件，或拖拽 .html 文件到此处（支持多选）</span>
-            <span class="file-drop-hint">每个最大 5MB</span>
+            <span id="fileDropText">点击选择，或拖拽 .html 文件到此处</span>
+            <span class="file-drop-hint">最大 5MB</span>
           </div>
         </div>
-        <div class="file-list" id="fileList" style="display:none;"></div>
+        <div class="file-preview" id="filePreview" style="display:none;">
+          <span class="file-preview-icon">📄</span>
+          <span class="file-preview-name" id="filePreviewName"></span>
+          <button class="file-remove" id="btnRemoveFile">✕</button>
+        </div>
 
-        <label class="form-label">📝 题目附件（可选，Word/JPG）</label>
+        <label class="form-label">② 题目附件（可选，Word/JPG/PDF）</label>
         <div class="file-drop-zone file-drop-zone-sm" id="questionDropZone">
           <input type="file" id="questionFile" accept=".doc,.docx,.jpg,.jpeg,.png,.pdf" class="file-input-hidden">
           <div class="file-drop-content">
-            <span class="file-drop-icon">📄</span>
-            <span id="questionDropText">点击选择题目文件（Word/图片/PDF）</span>
+            <span class="file-drop-icon">📎</span>
+            <span id="questionDropText">点击选择题目文件（与该程序配对）</span>
             <span class="file-drop-hint">最大 10MB</span>
           </div>
         </div>
         <div class="file-preview" id="questionPreview" style="display:none;">
-          <span class="file-preview-icon">📎</span>
+          <span class="file-preview-icon">📝</span>
           <span class="file-preview-name" id="questionPreviewName"></span>
           <button class="file-remove" id="btnRemoveQuestion">✕</button>
         </div>
@@ -290,21 +294,42 @@
 
       // ============ 加载目录 ============
       async function loadCatalog() {
-        // 先尝试 GitHub（最新），不可用则回退本地部署版本
+        // 本地优先（快），GitHub 后台静默更新
+        var loaded = false;
         try {
-          const resp = await fetch('https://raw.githubusercontent.com/adfdfjjnny/physics-teaching/main/catalog.json?t=' + Date.now());
-          if (!resp.ok) throw new Error('HTTP ' + resp.status);
-          catalog = await resp.json();
-        } catch (e) {
-          console.log('GitHub不可用，加载本地:', e.message);
           const resp = await fetch('catalog.json?t=' + Date.now());
-          if (!resp.ok) throw new Error('本地也失败');
-          catalog = await resp.json();
+          if (resp.ok) { catalog = await resp.json(); loaded = true; }
+        } catch (e) {}
+
+        if (!loaded) {
+          try {
+            const resp = await fetch('https://raw.githubusercontent.com/adfdfjjnny/physics-teaching/main/catalog.json?t=' + Date.now());
+            if (resp.ok) catalog = await resp.json();
+          } catch (e) {}
         }
+
+        if (!catalog) {
+          document.getElementById('cardGrid').innerHTML = '<div class="load-error">⚠️ 加载失败，请稍后刷新</div>';
+          return;
+        }
+
         renderNav();
         showCategory('all');
-        document.getElementById('updateTime').textContent =
-          new Date(catalog.updatedAt).toLocaleString('zh-CN');
+        document.getElementById('updateTime').textContent = new Date(catalog.updatedAt).toLocaleString('zh-CN');
+
+        // 后台静默从 GitHub 更新
+        setTimeout(function() {
+          fetch('https://raw.githubusercontent.com/adfdfjjnny/physics-teaching/main/catalog.json?t=' + Date.now())
+            .then(function(r) { return r.json(); })
+            .then(function(remote) {
+              if (remote && remote.totalPrograms !== catalog.totalPrograms) {
+                catalog = remote;
+                renderNav();
+                showCategory(activeCategoryId);
+                document.getElementById('updateTime').textContent = new Date(remote.updatedAt).toLocaleString('zh-CN');
+              }
+            }).catch(function() {});
+        }, 3000);
       }
 
       // ============ 渲染导航栏 ============
@@ -390,11 +415,11 @@
                 ${cat.emoji} ${cat.name}
               </span>
               <div class="card-footer">
-                ${program.questionFile ? '<a class="btn-comment" title="下载题目：' + escapeHtml(program.questionFile) + '" href="https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + escapeHtml(cat.id + '/' + program.questionFile) + '" download style="text-decoration:none">📝</a>' : ''}
+                <button class="btn-download" title="下载程序" data-action="download">💾 程序</button>
+                ${program.questionFile ? '<a class="btn-download" title="下载试题：' + escapeHtml(program.questionFile) + '" href="https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + escapeHtml(cat.id + '/' + program.questionFile) + '" download style="text-decoration:none">📝 试题</a>' : ''}
                 <button class="btn-comment" title="查看/添加评论" data-action="comment">💬</button>
                 <button class="btn-move" title="移动到其他板块" data-action="move">📦</button>
                 <button class="btn-delete" title="删除此程序" data-action="delete">🗑</button>
-                <button class="btn-download" title="下载此程序" data-action="download">💾</button>
                 <span class="card-arrow">打开 →</span>
               </div>
             </div>
@@ -414,7 +439,8 @@
       const modal = document.getElementById('uploadModal');
       const fileInput = document.getElementById('uploadFile');
       const dropZone = document.getElementById('fileDropZone');
-      const fileList = document.getElementById('fileList');
+      const filePreview = document.getElementById('filePreview');
+      const filePreviewName = document.getElementById('filePreviewName');
       const fileDropText = document.getElementById('fileDropText');
       const questionFile = document.getElementById('questionFile');
       const questionDropZone = document.getElementById('questionDropZone');
@@ -425,7 +451,7 @@
       const btnSubmitText = document.getElementById('btnSubmitText');
       const uploadSpinner = document.getElementById('uploadSpinner');
       const uploadStatus = document.getElementById('uploadStatus');
-      let selectedFiles = [];
+      let selectedFile = null;
       let selectedQuestionFile = null;
 
       // 打开弹窗
@@ -448,16 +474,14 @@
       }
 
       function resetUploadForm() {
-        fileInput.value = '';
-        selectedFiles = [];
-        fileList.style.display = 'none';
-        fileList.innerHTML = '';
-        fileDropText.textContent = '点击选择文件，或拖拽 .html 文件到此处（支持多选）';
+        fileInput.value = ''; selectedFile = null;
+        filePreview.style.display = 'none';
+        fileDropText.textContent = '点击选择，或拖拽 .html 文件到此处';
         fileDropText.className = '';
-        questionFile.value = '';
-        selectedQuestionFile = null;
+        questionFile.value = ''; selectedQuestionFile = null;
         questionPreview.style.display = 'none';
-        questionDropText.textContent = '点击选择题目文件（Word/图片/PDF）';
+        questionDropText.textContent = '点击选择题目文件（与该程序配对）';
+        questionDropText.className = '';
         btnSubmit.disabled = true;
         uploadStatus.style.display = 'none';
         uploadStatus.className = 'upload-status';
@@ -470,10 +494,39 @@
       dropZone.addEventListener('click', () => fileInput.click());
       questionDropZone.addEventListener('click', () => questionFile.click());
 
+      // HTML 文件选择
+      fileInput.addEventListener('change', function() {
+        if (fileInput.files.length > 0) handleHtmlFile(fileInput.files[0]);
+      });
+      dropZone.addEventListener('dragover', function(e) { e.preventDefault(); dropZone.classList.add('dragover'); });
+      dropZone.addEventListener('dragleave', function() { dropZone.classList.remove('dragover'); });
+      dropZone.addEventListener('drop', function(e) { e.preventDefault(); dropZone.classList.remove('dragover'); if (e.dataTransfer.files.length > 0) handleHtmlFile(e.dataTransfer.files[0]); });
+
+      function handleHtmlFile(f) {
+        if (!f.name.match(/\.html?$/i)) { alert('请选择 .html 文件'); return; }
+        if (f.size > 5*1024*1024) { alert('文件不能超过 5MB'); return; }
+        selectedFile = f;
+        filePreview.style.display = 'flex';
+        filePreviewName.textContent = f.name + ' (' + formatSize(f.size) + ')';
+        fileDropText.textContent = '✅ 已选择';
+        fileDropText.className = 'text-success';
+        btnSubmit.disabled = false;
+      }
+
+      document.getElementById('btnRemoveFile').addEventListener('click', function(e) {
+        e.stopPropagation(); e.preventDefault();
+        fileInput.value = ''; selectedFile = null;
+        filePreview.style.display = 'none';
+        fileDropText.textContent = '点击选择，或拖拽 .html 文件到此处';
+        fileDropText.className = '';
+        btnSubmit.disabled = true;
+      });
+
+      // 题目文件选择
       questionFile.addEventListener('change', function() {
         if (questionFile.files.length > 0) {
           var f = questionFile.files[0];
-          if (f.size > 10 * 1024 * 1024) { alert('题目文件不能超过 10MB'); return; }
+          if (f.size > 10*1024*1024) { alert('题目文件不能超过 10MB'); return; }
           selectedQuestionFile = f;
           questionPreview.style.display = 'flex';
           questionPreviewName.textContent = f.name + ' (' + formatSize(f.size) + ')';
@@ -484,60 +537,11 @@
 
       document.getElementById('btnRemoveQuestion').addEventListener('click', function(e) {
         e.stopPropagation(); e.preventDefault();
-        questionFile.value = '';
-        selectedQuestionFile = null;
+        questionFile.value = ''; selectedQuestionFile = null;
         questionPreview.style.display = 'none';
-        questionDropText.textContent = '点击选择题目文件（Word/图片/PDF）';
+        questionDropText.textContent = '点击选择题目文件（与该程序配对）';
         questionDropText.className = '';
       });
-
-      // 文件选择：change
-      fileInput.addEventListener('change', () => {
-        handleFiles(Array.from(fileInput.files));
-      });
-
-      // 拖拽
-      dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('dragover');
-      });
-      dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('dragover');
-      });
-      dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('dragover');
-        handleFiles(Array.from(e.dataTransfer.files));
-      });
-
-      function handleFiles(files) {
-        files.forEach(function(f) {
-          if (!f.name.match(/\.html?$/i)) return;
-          if (f.size > 5 * 1024 * 1024) return;
-          if (!selectedFiles.find(function(x) { return x.name === f.name; })) {
-            selectedFiles.push(f);
-          }
-        });
-        if (selectedFiles.length === 0) {
-          alert('请选择有效的 .html 文件（每个小于5MB）');
-          return;
-        }
-        fileDropText.textContent = '✅ 已选择 ' + selectedFiles.length + ' 个文件';
-        fileDropText.className = 'text-success';
-        fileList.style.display = 'block';
-        fileList.innerHTML = selectedFiles.map(function(f, i) {
-          return '<div class="file-preview"><span class="file-preview-icon">📄</span><span class="file-preview-name">' + f.name + '</span><span class="file-preview-size">' + formatSize(f.size) + '</span><button class="file-remove" data-idx="' + i + '">✕</button></div>';
-        }).join('');
-        fileList.querySelectorAll('.file-remove').forEach(function(btn) {
-          btn.addEventListener('click', function(e) { e.stopPropagation(); e.preventDefault();
-            var idx = parseInt(this.dataset.idx);
-            selectedFiles.splice(idx, 1);
-            handleFiles([]);
-          });
-        });
-        btnSubmit.disabled = false;
-        uploadStatus.style.display = 'none';
-      }
 
       function formatSize(bytes) {
         if (bytes < 1024) return bytes + ' B';
@@ -545,62 +549,48 @@
         return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
       }
 
-      // 提交上传（支持批量 + 题目附件）
+      // 提交上传（单程序 + 单题目配对）
       btnSubmit.addEventListener('click', async () => {
-        if (selectedFiles.length === 0) return;
-
+        if (!selectedFile) return;
         const category = document.getElementById('uploadCategory').value;
-
-        // 准备题目文件
-        var questionBase64 = null, questionFileName = null;
-        if (selectedQuestionFile) {
-          questionBase64 = await readFileAsBase64(selectedQuestionFile);
-          questionFileName = selectedQuestionFile.name;
-        }
-
         btnSubmit.disabled = true;
         uploadSpinner.style.display = 'inline-block';
         uploadStatus.style.display = 'block';
         uploadStatus.className = 'upload-status status-info';
+        uploadStatus.textContent = '⏳ 正在上传: ' + selectedFile.name;
 
-        var okCount = 0, failCount = 0;
-        var results = [];
-
-        for (var i = 0; i < selectedFiles.length; i++) {
-          var file = selectedFiles[i];
-          btnSubmitText.textContent = '上传中 (' + (i+1) + '/' + selectedFiles.length + ')...';
-          uploadStatus.textContent = '⏳ 正在上传: ' + file.name;
-
-          try {
-            var base64 = await readFileAsBase64(file);
-            var body = { category: category, filename: file.name, content: base64 };
-            if (questionBase64) {
-              body.questionContent = questionBase64;
-              body.questionFile = questionFileName;
-            }
-            var resp = await fetch('/upload', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body)
-            });
-            var data = await resp.json();
-            if (data.ok) { okCount++; results.push('✅ ' + file.name); }
-            else { failCount++; results.push('❌ ' + file.name + ': ' + (data.error || '失败')); }
-          } catch (err) {
-            failCount++; results.push('❌ ' + file.name + ': 网络错误');
+        try {
+          var base64 = await readFileAsBase64(selectedFile);
+          var body = { category: category, filename: selectedFile.name, content: base64 };
+          if (selectedQuestionFile) {
+            body.questionContent = await readFileAsBase64(selectedQuestionFile);
+            body.questionFile = selectedQuestionFile.name;
           }
-        }
-
-        uploadStatus.className = 'upload-status ' + (failCount === 0 ? 'status-success' : 'status-info');
-        uploadStatus.innerHTML = '✅ ' + okCount + ' 个成功' + (failCount > 0 ? '，❌ ' + failCount + ' 个失败' : '') +
-          '<br><small>' + results.join(' · ') + '</small>';
-        btnSubmitText.textContent = '完成！';
-        uploadSpinner.style.display = 'none';
-
-        if (failCount === 0) {
-          setTimeout(function() { closeModal(); showToast(okCount + ' 个文件已提交，等待审批'); }, 3000);
-        } else {
-          btnSubmit.disabled = false; btnSubmitText.textContent = '重试';
+          var resp = await fetch('/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          var data = await resp.json();
+          if (data.ok) {
+            uploadStatus.className = 'upload-status status-success';
+            uploadStatus.innerHTML = '✅ ' + escapeHtml(data.message) + '<br><small>' + escapeHtml(data.detail || '') + '</small>';
+            uploadSpinner.style.display = 'none';
+            btnSubmitText.textContent = '上传成功！';
+            setTimeout(function() { closeModal(); showToast('文件已提交，等待资源审核'); }, 3000);
+          } else {
+            uploadStatus.className = 'upload-status status-error';
+            uploadStatus.textContent = '❌ ' + (data.error || '失败');
+            btnSubmit.disabled = false;
+            uploadSpinner.style.display = 'none';
+            btnSubmitText.textContent = '重试';
+          }
+        } catch (err) {
+          uploadStatus.className = 'upload-status status-error';
+          uploadStatus.textContent = '❌ 网络错误';
+          btnSubmit.disabled = false;
+          uploadSpinner.style.display = 'none';
+          btnSubmitText.textContent = '重试';
         }
       });
 
@@ -1204,24 +1194,33 @@
 
       // ============ 卡片预览懒加载 ============
       function loadPreviews() {
-        document.querySelectorAll('.card-preview').forEach(function(el) {
-          if (el.dataset.loaded) return;
-          el.dataset.loaded = '1';
-          var path = el.dataset.preview;
-          if (!path) return;
-          var url = 'https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + path;
-          fetch(url).then(function(r) { return r.text(); }).then(function(html) {
-            var iframe = document.createElement('iframe');
-            iframe.className = 'preview-frame';
-            iframe.sandbox = 'allow-scripts allow-same-origin';
-            iframe.scrolling = 'no';
-            iframe.srcdoc = html;
-            iframe.onload = function() { iframe.style.opacity = '1'; };
-            el.innerHTML = '';
-            el.appendChild(iframe);
-          }).catch(function() {
-            el.innerHTML = '<div class="preview-error">预览不可用</div>';
+        var observer = new IntersectionObserver(function(entries) {
+          entries.forEach(function(entry) {
+            if (!entry.isIntersecting) return;
+            var el = entry.target;
+            if (el.dataset.loaded) return;
+            el.dataset.loaded = '1';
+            observer.unobserve(el);
+            var path = el.dataset.preview;
+            if (!path) return;
+            var url = 'https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + path;
+            fetch(url).then(function(r) { return r.text(); }).then(function(html) {
+              var iframe = document.createElement('iframe');
+              iframe.className = 'preview-frame';
+              iframe.sandbox = 'allow-scripts allow-same-origin';
+              iframe.scrolling = 'no';
+              iframe.srcdoc = html;
+              iframe.onload = function() { iframe.style.opacity = '1'; };
+              el.innerHTML = '';
+              el.appendChild(iframe);
+            }).catch(function() {
+              el.innerHTML = '<div class="preview-error">⏳</div>';
+            });
           });
+        }, { rootMargin: '200px' });
+
+        document.querySelectorAll('.card-preview').forEach(function(el) {
+          if (!el.dataset.loaded) observer.observe(el);
         });
       }
 
