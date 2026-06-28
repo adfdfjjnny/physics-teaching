@@ -56,10 +56,17 @@ async function main() {
               return get('/repos/adfdfjjnny/physics-teaching/contents/' + encodeURIComponent(cat + '/' + f.name)).then(function(data) {
                 fs.writeFileSync(localPath, data);
                 console.log('  ✅ ' + localPath);
-                // 尝试下载 .author 文件
-                return get('/repos/adfdfjjnny/physics-teaching/contents/' + encodeURIComponent(cat + '/' + f.name + '.author')).then(function(authorData) {
-                  fs.writeFileSync(authorPath, authorData);
-                }).catch(function(){});
+                // 尝试下载 .author .question 和题目文件
+                return Promise.all([
+                  get('/repos/adfdfjjnny/physics-teaching/contents/' + encodeURIComponent(cat + '/' + f.name + '.author')).then(function(d) { fs.writeFileSync(authorPath, d); }).catch(function(){}),
+                  get('/repos/adfdfjjnny/physics-teaching/contents/' + encodeURIComponent(cat + '/' + f.name + '.question')).then(function(d) {
+                    fs.writeFileSync(localPath + '.question', d);
+                    var qName = d.toString('utf-8').trim();
+                    return get('/repos/adfdfjjnny/physics-teaching/contents/' + encodeURIComponent(cat + '/' + qName)).then(function(qd) {
+                      fs.writeFileSync(path.join(cat, qName), qd);
+                    }).catch(function(){});
+                  }).catch(function(){})
+                ]);
               });
             })).then(resolve);
           } catch(e) { resolve(); }
