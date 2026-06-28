@@ -9,38 +9,10 @@
       "desc": "牛顿定律、运动学、万有引力等",
       "programs": [
         {
-          "file": "test_q.html",
-          "title": "test q",
-          "path": "1-li/test_q.html",
-          "author": "",
-          "questionFile": "test.doc"
-        },
-        {
-          "file": "test_with_q.html",
-          "title": "test with q",
-          "path": "1-li/test_with_q.html",
-          "author": "",
-          "questionFile": "test_question.doc"
-        },
-        {
-          "file": "波的叠加.html",
-          "title": "波的叠加",
-          "path": "1-li/波的叠加.html",
-          "author": "",
-          "questionFile": ""
-        },
-        {
-          "file": "滚轮线（摆线）.html",
-          "title": "滚轮线（摆线）",
-          "path": "1-li/滚轮线（摆线）.html",
-          "author": "{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/repos/contents#get-repository-content\",\"status\":\"404\"}",
-          "questionFile": ""
-        },
-        {
           "file": "驻波演示.html",
           "title": "驻波演示",
           "path": "1-li/驻波演示.html",
-          "author": "{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/repos/contents#get-repository-content\",\"status\":\"404\"}",
+          "author": "",
           "questionFile": "驻波题.jpg"
         }
       ],
@@ -73,29 +45,7 @@
       "emoji": "🔵",
       "color": "#0891b2",
       "desc": "电场强度、电场线、电势、电容器等",
-      "programs": [
-        {
-          "file": "旋转圆.html",
-          "title": "旋转圆",
-          "path": "8-dianchang/旋转圆.html",
-          "author": "",
-          "questionFile": ""
-        },
-        {
-          "file": "示玻管3D.html",
-          "title": "示玻管3D",
-          "path": "8-dianchang/示玻管3D.html",
-          "author": "",
-          "questionFile": ""
-        },
-        {
-          "file": "空间螺旋磁聚焦.html",
-          "title": "空间螺旋磁聚焦",
-          "path": "8-dianchang/空间螺旋磁聚焦.html",
-          "author": "",
-          "questionFile": "26.6湖州高二期末压轴题.jpg"
-        }
-      ],
+      "programs": [],
       "description": "电场强度、电场线、电势、电容器等"
     },
     {
@@ -125,22 +75,7 @@
       "emoji": "💡",
       "color": "#f97316",
       "desc": "几何光学、波动光学、干涉衍射等",
-      "programs": [
-        {
-          "file": "多普勒效应演示终版.html",
-          "title": "多普勒效应演示终版",
-          "path": "6-guang/多普勒效应演示终版.html",
-          "author": "",
-          "questionFile": ""
-        },
-        {
-          "file": "水下点光源（全反射）.html",
-          "title": "水下点光源（全反射）",
-          "path": "6-guang/水下点光源（全反射）.html",
-          "author": "{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/repos/contents#get-repository-content\",\"status\":\"404\"}",
-          "questionFile": ""
-        }
-      ],
+      "programs": [],
       "description": "几何光学、波动光学、干涉衍射等"
     },
     {
@@ -154,6 +89,6 @@
       "description": "玻尔模型、能级跃迁、原子核等"
     }
   ],
-  "totalPrograms": 10,
-  "updatedAt": "2026-06-28T15:30:40.707Z"
+  "totalPrograms": 1,
+  "updatedAt": "2026-06-28T16:11:55.274Z"
 }
