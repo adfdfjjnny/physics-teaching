@@ -50,14 +50,14 @@ body {
 }
 
 .site-title {
-  font-size: 2rem;
+  font-size: 2.4rem;
   font-weight: 700;
   letter-spacing: 0.03em;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .site-subtitle {
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   opacity: 0.85;
   font-weight: 500;
 }
@@ -169,18 +169,11 @@ body {
 }
 
 /* ---------- 通知公告栏 ---------- */
-.header-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
-
 .notice-bar {
   background: rgba(255,255,255,0.95);
-  border-radius: 12px;
-  width: 280px;
-  min-height: 140px;
+  border-radius: 14px;
+  width: 420px;
+  min-height: 200px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.1);
   overflow: hidden;
 }
@@ -189,21 +182,33 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
+  padding: 14px 20px;
   background: #f1f5f9;
   border-bottom: 1px solid #e2e8f0;
-  font-size: 1rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: #334155;
 }
 
 .notice-body {
-  padding: 14px 16px;
-  font-size: 0.9rem;
+  padding: 18px 20px;
+  font-size: 1.05rem;
   color: #1e293b;
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.header-right {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .notice-edit-btn {
@@ -728,19 +733,21 @@ body {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 24px;
   position: relative;
 }
 
 .header-top > div:first-child {
-  text-align: center;
+  text-align: left;
+  padding-left: 170px;
+  max-width: 60%;
 }
 
 .header-right {
   position: absolute;
-  right: 0;
-  top: 0;
+  right: 30px;
+  top: 90px;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -752,21 +759,21 @@ body {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   margin-top: 12px;
 }
 
 .btn-upload {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 28px;
-  background: rgba(255,255,255,0.15);
+  gap: 10px;
+  padding: 14px 34px;
+  background: rgba(255,255,255,0.2);
   color: white;
-  border: 1.5px solid rgba(255,255,255,0.3);
-  border-radius: 24px;
-  font-size: 1rem;
-  font-weight: 600;
+  border: 2px solid rgba(255,255,255,0.5);
+  border-radius: 28px;
+  font-size: 1.15rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: inherit;
@@ -788,14 +795,14 @@ body {
 .btn-approve {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 28px;
-  background: rgba(255,255,255,0.15);
+  gap: 10px;
+  padding: 14px 34px;
+  background: rgba(255,255,255,0.2);
   color: white;
-  border: 1.5px solid rgba(255,255,255,0.3);
-  border-radius: 24px;
-  font-size: 1rem;
-  font-weight: 600;
+  border: 2px solid rgba(255,255,255,0.5);
+  border-radius: 28px;
+  font-size: 1.15rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: inherit;
@@ -804,8 +811,8 @@ body {
 }
 
 .btn-approve:hover {
-  background: rgba(255,255,255,0.25);
-  border-color: rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.3);
+  border-color: rgba(255,255,255,0.7);
   transform: translateY(-1px);
 }
 
