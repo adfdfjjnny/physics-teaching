@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>空间螺旋磁聚焦 — 电子在匀强磁场中的螺旋运动</title>
+<style>
+  :root { --bg: #0a0a14; --panel-bg: rgba(10,10,30,0.92); }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    font-family: 'PingFang SC','Microsoft YaHei','Helvetica Neue',sans-serif;
+    overflow: hidden; height: 100vh; width: 100vw;
+    user-select: none; -webkit-user-select: none;
+  }
+  canvas { display: block; position: fixed; inset: 0; z-index: 1; }
+
+  #title-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+    padding: 14px 24px; display: flex; align-items: center; gap: 14px; pointer-events: none;
+  }
+  #title-bar h1 {
+    font-size: 1.2rem; font-weight: 600; color: #e0e0f0;
+    letter-spacing: 0.04em; text-shadow: 0 0 18px rgba(120,160,255,0.5);
+  }
+  #title-bar .badge {
+    font-size: 0.68rem; padding: 3px 10px; border-radius: 20px;
+    background: rgba(100,140,255,0.2); border: 1px solid rgba(100,140,255,0.35);
+    color: #90b0f0; letter-spacing: 0.05em;
+  }
+
+  #legend {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 10;
+    display: flex; gap: 14px; padding: 10px 18px; border-radius: 24px;
+    background: var(--panel-bg); border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #b0b0c8; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 6px currentColor; }
+
+  #info-panel {
+    position: fixed; right: 12px; top: 50%; transform: translateY(-50%); z-index: 10;
+    width: 220px; padding: 16px 14px; border-radius: 14px;
+    background: var(--panel-bg); border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px); font-size: 0.73rem; color: #a0a0c0; line-height: 1.65;
+  }
+  #info-panel .hl  { color: #ffb74d; font-weight: 600; }
+  #info-panel .hl2 { color: #64b5f6; font-weight: 600; }
+  #info-panel .formula {
+    display: block; margin: 4px 0; padding: 4px 8px;
+    background: rgba(255,255,255,0.04); border-radius: 6px;
+    font-family: 'Cambria Math','Times New Roman',serif;
+    font-size: 0.8rem; color: #d0d0e8; text-align: center;
+  }
+
+  #controls {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 10;
+    display: flex; gap: 8px; align-items: center;
+  }
+  #controls button {
+    padding: 5px 12px; border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: var(--panel-bg); color: #c0c0d8;
+    font-size: 0.72rem; cursor: pointer; transition: all 0.2s;
+  }
+  #controls button:hover { border-color: rgba(120,160,255,0.5); color: #fff; }
+  #controls button.active { background: rgba(100,140,255,0.25); border-color: rgba(120,160,255,0.6); }
+
+  #hint {
+    position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+    z-index: 10; font-size: 0.68rem; color: rgba(180,180,200,0.45); pointer-events:none;
+  }
+  #speed-indicator {
+    position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%);
+    z-index: 10; font-size: 0.65rem; color: rgba(180,180,200,0.55);
+    pointer-events: none; transition: opacity 0.3s;
+  }
+
+  @media (max-width: 768px) {
+    #info-panel { display: none; }
+    #legend { gap: 6px; padding: 6px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<div id="title-bar">
+  <h1>空间螺旋磁聚焦（精确聚焦）</h1>
+  <span class="badge">v<sub>∥</sub> = 定值 &nbsp;→&nbsp; 螺距相同 &nbsp;→&nbsp; 任意 ζ+φ 均精确汇聚</span>
+</div>
+
+<div id="info-panel">
+  <div style="font-weight:600;color:#e0e0f0;margin-bottom:6px;">📐 物理原理</div>
+  <span class="hl">B⃗</span> 方向水平向左<br>
+  电子从右侧小孔 <span class="hl2">Q</span> 射入<br>
+  发射角 <span class="hl2">ζ</span>（与轴线夹角）<br>
+  方位角 <span class="hl2">φ</span>（绕轴线任意方向）<br>
+  <span class="formula" style="color:#ffb74d;">v<sub>∥</sub> = 定值（关键！）</span>
+  <span class="formula">v<sub>⊥</sub> = v<sub>∥</sub>·tan ζ<br>v = v<sub>∥</sub> / cos ζ</span>
+  回旋半径:
+  <span class="formula">r = mv<sub>⊥</sub>/(eB)</span>
+  回旋周期（与 ζ 无关）:
+  <span class="formula">T = 2πm/(eB)</span>
+  螺距（与 ζ 无关）:
+  <span class="formula">d = v<sub>∥</sub>·T = <b>定值</b></span>
+  <br>
+  <span style="color:#4fc3f7;">✦ v<sub>∥</sub> 恒定 → 螺距相同</span><br>
+  <span style="color:#4fc3f7;">✦ 所有电子经一个周期</span><br>
+  <span style="color:#4fc3f7;">&nbsp;&nbsp;&nbsp;精确汇聚于同一点</span><br>
+  <span style="color:#ffcc00;font-weight:600;">✦ 精确磁聚焦（非近似！）</span>
+</div>
+
+<div id="legend"></div>
+
+<div id="controls">
+  <button id="btn-anim" class="active">▶ 动画</button>
+  <button id="btn-rotate">🔄 自动旋转</button>
+  <button id="btn-reset">🏠 重置</button>
+  <button id="btn-top">📐 俯视</button>
+  <button id="btn-front">🔍 正视</button>
+</div>
+<div id="speed-indicator"></div>
+<div id="hint">🖱 拖拽旋转 &nbsp;|&nbsp; 滚轮缩放 &nbsp;|&nbsp; 空格 播放/暂停</div>
+
+<script>
+// ==================== 物理参数 ====================
+// 关键：v∥（水平分量）= 定值！所有电子轴向速度相同
+// 发射方向：与 -x 轴（B 方向）夹角 ζ，可绕轴线任意方位角 φ
+// v∥ = v·cosζ = 常数，v⊥ = v∥·tanζ，螺距 d = v∥·T 完全相同
+// → 精确磁聚焦：任意 ζ、任意 φ 都汇聚于同一点！
+const L = 12, R_cyl = 1.1;
+const vPara = 6;
+const omega = Math.PI, T_period = 2, X0 = L / 2;
+
+// 轨迹定义：{ zetaDeg, phiDeg, color, alpha, width, name }
+// phi = 方位角（v⊥ 在 yz 平面内的方向）
+function makeTrajectories() {
+  const list = [];
+  const angles = [
+    { zetaDeg: 0,  color: '#4fc3f7', name: 'ζ=0°' },
+    { zetaDeg: 5,  color: '#81c784', name: 'ζ=5°' },
+    { zetaDeg: 10, color: '#ffd54f', name: 'ζ=10°' },
+    { zetaDeg: 15, color: '#ff8a65', name: 'ζ=15°' },
+    { zetaDeg: 22, color: '#ef5350', name: 'ζ=22°' },
+  ];
+  angles.forEach(a => {
+    a.zeta = a.zetaDeg * Math.PI / 180;
+    if (a.zetaDeg === 0) {
+      // 直线（φ 无意义）
+      list.push({ zeta: 0, phi: 0, r: 0, color: a.color, alpha: 1, width: 2.2, name: a.name, isMain: true });
+    } else {
+      // 每个 ζ 有 3 条轨迹，不同方位角 φ
+      const phiDegs = [0, 120, 240];
+      phiDegs.forEach((phiDeg, idx) => {
+        const phi = phiDeg * Math.PI / 180;
+        const r = vPara * Math.tan(a.zeta) / omega;
+        list.push({
+          zeta: a.zeta, phi, r, color: a.color,
+          alpha: idx === 0 ? 0.85 : 0.35,   // 主轨迹突出
+          width: idx === 0 ? 1.8 : 1.0,
+          name: idx === 0 ? a.name : '',
+          isMain: idx === 0,
+        });
+      });
+    }
+  });
+  return list;
+}
+
+const TRAJECTORIES = makeTrajectories();
+
+// ==================== Canvas 设置 ====================
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W, H, cx, cy;
+
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  cx = W / 2; cy = H / 2;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ==================== 3D 变换 ====================
+let rotY = 0.65, rotX = 0.35;  // 旋转角度
+let targetRotY = rotY, targetRotX = rotX;
+let zoom = 32;
+let targetZoom = zoom;
+let autoRotate = false;
+
+function rotate3D(p) {
+  // Rotate around Y
+  const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+  const x1 = p.x * cosY + p.z * sinY;
+  const y1 = p.y;
+  const z1 = -p.x * sinY + p.z * cosY;
+  // Rotate around X
+  const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+  const x2 = x1;
+  const y2 = y1 * cosX - z1 * sinX;
+  const z2 = y1 * sinX + z1 * cosX;
+  return { x: x2, y: y2, z: z2 };
+}
+
+function project(p) {
+  const d = 22;
+  const f = d / (d - p.z);
+  return {
+    x: cx + p.x * zoom * f,
+    y: cy - p.y * zoom * f,
+    z: p.z  // 保留深度信息
+  };
+}
+
+function rp(p3) { return project(rotate3D(p3)); }
+
+// ==================== 螺旋线点 ====================
+// v∥ 恒定 → 所有电子轴向运动同步
+// 任意发射角 ζ + 任意方位角 φ → 经 T 后精确回到轴线！
+// y(t) = r·[sin(ωt - φ) + sinφ]
+// z(t) = r·[cos(ωt - φ) - cosφ]
+function helixPoint(zeta, phi, t) {
+  const r = vPara * Math.tan(zeta) / omega;
+  if (r < 1e-9) {
+    // ζ ≈ 0: 直线沿轴
+    return { x: X0 - vPara * t, y: 0, z: 0 };
+  }
+  return {
+    x: X0 - vPara * t,
+    y: r * (Math.sin(omega * t - phi) + Math.sin(phi)),
+    z: r * (Math.cos(omega * t - phi) - Math.cos(phi))
+  };
+}
+
+// ==================== 绘制函数 ====================
+function drawGlowLine(pts2d, color, width, alpha) {
+  if (pts2d.length < 2) return;
+  // 发光层
+  for (let g = 2; g >= 0; g--) {
+    ctx.beginPath();
+    ctx.moveTo(pts2d[0].x, pts2d[0].y);
+    for (let i = 1; i < pts2d.length; i++) {
+      ctx.lineTo(pts2d[i].x, pts2d[i].y);
+    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width + g * 2.5;
+    ctx.globalAlpha = alpha * (0.15 / (g + 1));
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
+  // 主线
+  ctx.beginPath();
+  ctx.moveTo(pts2d[0].x, pts2d[0].y);
+  for (let i = 1; i < pts2d.length; i++) {
+    ctx.lineTo(pts2d[i].x, pts2d[i].y);
+  }
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.globalAlpha = alpha;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+function drawCircle3D(cx3, radius, color, alpha, lineWidth) {
+  // 在 YZ 平面画圆（用于筒体横截面）
+  const pts = [];
+  const N = 80;
+  for (let i = 0; i <= N; i++) {
+    const angle = (i / N) * Math.PI * 2;
+    pts.push(rp({ x: cx3, y: radius * Math.cos(angle), z: radius * Math.sin(angle) }));
+  }
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lineWidth || 1;
+  ctx.globalAlpha = alpha;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+function drawFilledCircle3D(cx3, radius, color, alpha) {
+  const pts = [];
+  const N = 80;
+  for (let i = 0; i <= N; i++) {
+    const angle = (i / N) * Math.PI * 2;
+    pts.push(rp({ x: cx3, y: radius * Math.cos(angle), z: radius * Math.sin(angle) }));
+  }
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.globalAlpha = alpha;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+// ==================== 场景渲染 ====================
+function renderCylinder() {
+  // 筒体横截面圆环
+  const N_sections = 16;
+  for (let i = 0; i <= N_sections; i++) {
+    const x = -X0 + (i / N_sections) * L;
+    const alpha = 0.22 + 0.06 * (1 - Math.abs(x / X0));
+    drawCircle3D(x, R_cyl, '#8899cc', alpha, 0.8);
+  }
+
+  // 纵向线
+  const N_long = 24;
+  for (let j = 0; j < N_long; j++) {
+    const angle = (j / N_long) * Math.PI * 2;
+    const pts = [];
+    const N_pts = 30;
+    for (let i = 0; i <= N_pts; i++) {
+      const x = -X0 + (i / N_pts) * L;
+      pts.push(rp({ x, y: R_cyl * Math.cos(angle), z: R_cyl * Math.sin(angle) }));
+    }
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.strokeStyle = '#8899cc';
+    ctx.lineWidth = 0.5;
+    ctx.globalAlpha = 0.1;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // 端面环（加粗）
+  drawCircle3D(-X0, R_cyl, '#bbccdd', 0.55, 1.8);
+  drawCircle3D( X0, R_cyl, '#bbccdd', 0.55, 1.8);
+
+  // 端面半透明填充
+  drawFilledCircle3D(-X0, R_cyl, '#334466', 0.12);
+  drawFilledCircle3D( X0, R_cyl, '#334466', 0.12);
+}
+
+function renderTrajectories() {
+  const N = 400;
+  TRAJECTORIES.forEach(traj => {
+    const pts3d = [];
+    for (let i = 0; i <= N; i++) {
+      pts3d.push(helixPoint(traj.zeta, traj.phi, (i / N) * T_period));
+    }
+    const pts2d = pts3d.map(p => rp(p));
+    drawGlowLine(pts2d, traj.color, traj.width, traj.alpha);
+  });
+}
+
+function renderBFieldArrows() {
+  const positions = [];
+  for (let yi = -0.4; yi <= 0.4; yi += 0.4) {
+    for (let zi = -0.4; zi <= 0.4; zi += 0.4) {
+      if (yi === 0 && zi === 0) continue;
+      if (Math.sqrt(yi*yi + zi*zi) > R_cyl * 0.65) continue;
+      positions.push({ y: yi, z: zi });
+    }
+  }
+
+  positions.forEach(({ y, z }) => {
+    // 箭身线
+    const start = rp({ x: 4.5, y, z });
+    const end   = rp({ x: -4.5, y, z });
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.strokeStyle = '#4488dd';
+    ctx.lineWidth = 1.2;
+    ctx.globalAlpha = 0.45;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // 箭头（小三角形在线的左端）
+    const tip = rp({ x: -4.5, y, z });
+    const base = rp({ x: -4.0, y, z });
+    const dx = tip.x - base.x;
+    const dy = tip.y - base.y;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const nx = -dy / len * 4;
+    const ny =  dx / len * 4;
+    ctx.beginPath();
+    ctx.moveTo(tip.x, tip.y);
+    ctx.lineTo(base.x + nx, base.y + ny);
+    ctx.lineTo(base.x - nx, base.y - ny);
+    ctx.closePath();
+    ctx.fillStyle = '#4488dd';
+    ctx.globalAlpha = 0.55;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+
+  // 轴线上大箭头
+  const bigStart = rp({ x: 5.5, y: R_cyl + 0.6, z: 0 });
+  const bigEnd   = rp({ x: -5.5, y: R_cyl + 0.6, z: 0 });
+  ctx.beginPath();
+  ctx.moveTo(bigStart.x, bigStart.y);
+  ctx.lineTo(bigEnd.x, bigEnd.y);
+  ctx.strokeStyle = '#6699ff';
+  ctx.lineWidth = 2.5;
+  ctx.globalAlpha = 0.7;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // 大箭头尖
+  const btip = bigEnd;
+  const bbase = rp({ x: -4.8, y: R_cyl + 0.6, z: 0 });
+  const bdx = btip.x - bbase.x;
+  const bdy = btip.y - bbase.y;
+  const blen = Math.sqrt(bdx*bdx + bdy*bdy) || 1;
+  const bnx = -bdy / blen * 7;
+  const bny =  bdx / blen * 7;
+  ctx.beginPath();
+  ctx.moveTo(btip.x, btip.y);
+  ctx.lineTo(bbase.x + bnx, bbase.y + bny);
+  ctx.lineTo(bbase.x - bnx, bbase.y - bny);
+  ctx.closePath();
+  ctx.fillStyle = '#6699ff';
+  ctx.globalAlpha = 0.75;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function renderAxisLabels() {
+  // X轴
+  const xEnd = rp({ x: 7.5, y: -2.2, z: 0 });
+  const xStart = rp({ x: -7.5, y: -2.2, z: 0 });
+  ctx.beginPath(); ctx.moveTo(xStart.x, xStart.y); ctx.lineTo(xEnd.x, xEnd.y);
+  ctx.strokeStyle = '#ff6666'; ctx.lineWidth = 1; ctx.globalAlpha = 0.35; ctx.stroke(); ctx.globalAlpha = 1;
+
+  // Y轴
+  const yEnd = rp({ x: -7.5, y: 5.5, z: 0 });
+  ctx.beginPath(); ctx.moveTo(xStart.x, xStart.y); ctx.lineTo(yEnd.x, yEnd.y);
+  ctx.strokeStyle = '#66ff66'; ctx.lineWidth = 1; ctx.globalAlpha = 0.35; ctx.stroke(); ctx.globalAlpha = 1;
+
+  // Z轴
+  const zEnd = rp({ x: -7.5, y: -2.2, z: 5.5 });
+  ctx.beginPath(); ctx.moveTo(xStart.x, xStart.y); ctx.lineTo(zEnd.x, zEnd.y);
+  ctx.strokeStyle = '#6666ff'; ctx.lineWidth = 1; ctx.globalAlpha = 0.35; ctx.stroke(); ctx.globalAlpha = 1;
+
+  // 标签
+  ctx.font = '12px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ff6666'; ctx.fillText('X', xEnd.x + 10, xEnd.y + 4);
+  ctx.fillStyle = '#66ff66'; ctx.fillText('Y', yEnd.x, yEnd.y - 8);
+  ctx.fillStyle = '#6666ff'; ctx.fillText('Z', zEnd.x - 8, zEnd.y + 4);
+}
+
+function renderMarkers(animT) {
+  // Q 点（右侧电子源）
+  const qScreen = rp({ x: X0, y: 0, z: 0 });
+  // 光晕
+  for (let g = 3; g >= 0; g--) {
+    ctx.beginPath();
+    ctx.arc(qScreen.x, qScreen.y, 7 + g * 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.globalAlpha = 0.1 / (g + 1);
+    ctx.fill();
+  }
+  // 核心
+  ctx.beginPath();
+  ctx.arc(qScreen.x, qScreen.y, 5, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff';
+  ctx.globalAlpha = 1;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Q 标签
+  ctx.font = 'bold 13px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText('Q (电子源)', qScreen.x + 14, qScreen.y + 5);
+
+  // 焦点（左侧端面）
+  const focusScreen = rp({ x: -X0, y: 0, z: 0 });
+  // 脉冲光晕
+  const pulse = 1 + 0.3 * Math.sin(performance.now() * 0.005);
+  for (let g = 3; g >= 0; g--) {
+    ctx.beginPath();
+    ctx.arc(focusScreen.x, focusScreen.y, (6 + g * 3) * pulse, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffcc00';
+    ctx.globalAlpha = 0.15 / (g + 1);
+    ctx.fill();
+  }
+  // 核心
+  ctx.beginPath();
+  ctx.arc(focusScreen.x, focusScreen.y, 4, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffcc00';
+  ctx.globalAlpha = 1;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // 焦点标签
+  ctx.fillStyle = '#ffcc00';
+  ctx.fillText('焦点 (精确汇聚)', focusScreen.x + 12, focusScreen.y + 5);
+
+  // B 标签
+  const bLabel = rp({ x: 0, y: R_cyl + 0.9, z: 0 });
+  ctx.fillStyle = '#6699ff';
+  ctx.textAlign = 'center';
+  ctx.fillText('B⃗', bLabel.x, bLabel.y);
+
+  // 所有轨迹终点精确汇聚（v∥恒定 + 任意 φ → 全部聚焦同一点）
+}
+
+function renderParticles(animT) {
+  const t = Math.min(animT, T_period);
+  TRAJECTORIES.forEach(traj => {
+    const pos = helixPoint(traj.zeta, traj.phi, t);
+    const s = rp(pos);
+
+    const isMain = traj.isMain;
+    const sizeMul = isMain ? 1 : 0.55;
+    const alphaMul = isMain ? 1 : 0.5;
+
+    // 拖尾
+    const trailT = Math.max(0, t - 0.06);
+    const trailPos = helixPoint(traj.zeta, traj.phi, trailT);
+    const ts = rp(trailPos);
+
+    ctx.beginPath();
+    ctx.arc(ts.x, ts.y, 2 * sizeMul, 0, Math.PI * 2);
+    ctx.fillStyle = traj.color;
+    ctx.globalAlpha = 0.35 * alphaMul;
+    ctx.fill();
+
+    // 主粒子
+    const speed = (t < T_period * 0.05 || t > T_period * 0.95) ? 0.6 : 1.0;
+    const size = 4.5 * (0.85 + speed * 0.3) * sizeMul;
+
+    // 光晕
+    const glowLayers = isMain ? 2 : 1;
+    for (let g = glowLayers; g >= 0; g--) {
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, size + g * 2.5 * sizeMul, 0, Math.PI * 2);
+      ctx.fillStyle = traj.color;
+      ctx.globalAlpha = (0.2 / (g + 1)) * alphaMul;
+      ctx.fill();
+    }
+    // 核心
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, size, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.globalAlpha = 0.9 * alphaMul;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+}
+
+// ==================== 主循环 ====================
+let animTime = 0;
+let animPlaying = true;
+let animSpeed = 1.0;
+const ANIM_CYCLE = T_period + 1.2;
+let lastTime = performance.now();
+
+function render(timestamp) {
+  requestAnimationFrame(render);
+
+  const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
+  lastTime = timestamp;
+
+  // 平滑旋转
+  rotY += (targetRotY - rotY) * 0.12;
+  rotX += (targetRotX - rotX) * 0.12;
+  zoom += (targetZoom - zoom) * 0.12;
+
+  if (autoRotate) {
+    targetRotY += dt * 0.4;
+  }
+
+  // 动画时间
+  if (animPlaying) {
+    animTime += dt * animSpeed;
+    if (animTime > ANIM_CYCLE) animTime -= ANIM_CYCLE;
+  }
+
+  // 清屏
+  ctx.clearRect(0, 0, W, H);
+
+  // 背景渐变
+  const bgGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.7);
+  bgGrad.addColorStop(0, '#141428');
+  bgGrad.addColorStop(1, '#080812');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // 绘制顺序：从远到近
+  renderBFieldArrows();
+  renderCylinder();
+  renderTrajectories();
+  renderAxisLabels();
+  renderMarkers(animTime);
+  renderParticles(animTime);
+}
+
+// ==================== 鼠标/触摸交互 ====================
+let dragging = false;
+let lastMouse = { x: 0, y: 0 };
+let touching = false;
+let lastTouches = null;
+
+canvas.addEventListener('mousedown', (e) => {
+  dragging = true;
+  lastMouse = { x: e.clientX, y: e.clientY };
+});
+canvas.addEventListener('mousemove', (e) => {
+  if (!dragging) return;
+  const dx = e.clientX - lastMouse.x;
+  const dy = e.clientY - lastMouse.y;
+  targetRotY += dx * 0.008;
+  targetRotX -= dy * 0.008;
+  targetRotX = Math.max(-2.8, Math.min(2.8, targetRotX));
+  lastMouse = { x: e.clientX, y: e.clientY };
+});
+canvas.addEventListener('mouseup', () => { dragging = false; });
+canvas.addEventListener('mouseleave', () => { dragging = false; });
+
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  targetZoom += e.deltaY * -0.05;
+  targetZoom = Math.max(5, Math.min(150, targetZoom));
+}, { passive: false });
+
+// 触摸支持
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  touching = true;
+  if (e.touches.length === 1) {
+    lastTouches = [{ x: e.touches[0].clientX, y: e.touches[0].clientY }];
+  } else if (e.touches.length === 2) {
+    lastTouches = [
+      { x: e.touches[0].clientX, y: e.touches[0].clientY },
+      { x: e.touches[1].clientX, y: e.touches[1].clientY }
+    ];
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  if (!touching || !lastTouches) return;
+  if (e.touches.length === 1 && lastTouches.length === 1) {
+    const dx = e.touches[0].clientX - lastTouches[0].x;
+    const dy = e.touches[0].clientY - lastTouches[0].y;
+    targetRotY += dx * 0.008;
+    targetRotX -= dy * 0.008;
+    targetRotX = Math.max(-2.8, Math.min(2.8, targetRotX));
+    lastTouches = [{ x: e.touches[0].clientX, y: e.touches[0].clientY }];
+  } else if (e.touches.length === 2 && lastTouches.length === 2) {
+    const d0 = Math.hypot(lastTouches[0].x - lastTouches[1].x, lastTouches[0].y - lastTouches[1].y);
+    const d1 = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    targetZoom += (d0 - d1) * 0.15;
+    targetZoom = Math.max(5, Math.min(150, targetZoom));
+    lastTouches = [
+      { x: e.touches[0].clientX, y: e.touches[0].clientY },
+      { x: e.touches[1].clientX, y: e.touches[1].clientY }
+    ];
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', () => { touching = false; lastTouches = null; });
+
+// ==================== 按钮控制 ====================
+document.getElementById('btn-anim').addEventListener('click', function() {
+  animPlaying = !animPlaying;
+  this.textContent = animPlaying ? '⏸ 暂停' : '▶ 动画';
+  this.classList.toggle('active', animPlaying);
+});
+
+document.getElementById('btn-rotate').addEventListener('click', function() {
+  autoRotate = !autoRotate;
+  this.classList.toggle('active', autoRotate);
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  targetRotY = 0.65; targetRotX = 0.35; targetZoom = 32;
+});
+
+document.getElementById('btn-top').addEventListener('click', () => {
+  targetRotY = 0; targetRotX = 1.5; targetZoom = 32;
+});
+
+document.getElementById('btn-front').addEventListener('click', () => {
+  targetRotY = 1.57; targetRotX = 0; targetZoom = 30;
+});
+
+// ==================== 键盘控制 ====================
+window.addEventListener('keydown', (e) => {
+  const spd = document.getElementById('speed-indicator');
+  switch (e.key.toLowerCase()) {
+    case ' ':
+      e.preventDefault();
+      document.getElementById('btn-anim').click();
+      break;
+    case 'r':
+      document.getElementById('btn-rotate').click();
+      break;
+    case 't':
+      document.getElementById('btn-top').click();
+      break;
+    case 'f':
+      document.getElementById('btn-front').click();
+      break;
+    case '0':
+      document.getElementById('btn-reset').click();
+      break;
+    case 'arrowleft':
+      animSpeed = Math.max(0.1, animSpeed - 0.25);
+      spd.textContent = `速度: ${animSpeed.toFixed(2)}x`;
+      spd.style.opacity = '1';
+      clearTimeout(spd._timeout);
+      spd._timeout = setTimeout(() => { spd.style.opacity = '0'; }, 1200);
+      break;
+    case 'arrowright':
+      animSpeed = Math.min(4, animSpeed + 0.25);
+      spd.textContent = `速度: ${animSpeed.toFixed(2)}x`;
+      spd.style.opacity = '1';
+      clearTimeout(spd._timeout);
+      spd._timeout = setTimeout(() => { spd.style.opacity = '0'; }, 1200);
+      break;
+  }
+});
+
+// ==================== 图例 ====================
+const legendEl = document.getElementById('legend');
+TRAJECTORIES.forEach(traj => {
+  if (!traj.name) return;  // 仅图例显示主轨迹
+  const item = document.createElement('div');
+  item.className = 'legend-item';
+  item.innerHTML = `<span class="legend-dot" style="background:${traj.color};color:${traj.color}"></span>${traj.name}`;
+  legendEl.appendChild(item);
+});
+// 添加方位角说明
+const phiNote = document.createElement('div');
+phiNote.className = 'legend-item';
+phiNote.innerHTML = `<span style="font-size:0.65rem;color:#667;">(每条含3个方位角φ)</span>`;
+legendEl.appendChild(phiNote);
+
+// ==================== 启动 ====================
+console.log('✅ 空间螺旋磁聚焦（精确聚焦版）— 纯 Canvas 离线');
+console.log('   物理：v∥ = 定值 → 螺距相同 → 所有电子精确汇聚！');
+console.log('   🖱 拖拽旋转 | 滚轮缩放 | 空格 播放/暂停');
+console.log('   ⌨ R:自动旋转 T:俯视 F:正视 0:重置 ←→:调速');
+requestAnimationFrame(render);
+</script>
+</body>
+</html>
