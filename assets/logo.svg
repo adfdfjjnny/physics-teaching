@@ -1,0 +1,9 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <rect x="5" y="3" width="90" height="94" rx="8" fill="#f8fafc" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="50" y="18" text-anchor="middle" font-size="7" font-family="sans-serif" fill="#64748b" font-weight="bold">MAXWELL'S EQUATIONS</text>
+  <line x1="10" y1="23" x2="90" y2="23" stroke="#e2e8f0" stroke-width="0.5"/>
+  <text x="50" y="40" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#2563eb" font-style="italic" font-weight="bold">∇·E = ρ/ε₀</text>
+  <text x="50" y="56" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#3b82f6" font-style="italic" font-weight="bold">∇·B = 0</text>
+  <text x="50" y="72" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#1d4ed8" font-style="italic" font-weight="bold">∇×E = -∂B/∂t</text>
+  <text x="50" y="88" text-anchor="middle" font-size="11" font-family="Georgia,serif" fill="#1e3a5f" font-style="italic" font-weight="bold">∇×B = μ₀J+μ₀ε₀∂E/∂t</text>
+</svg>
