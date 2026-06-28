@@ -1020,10 +1020,8 @@
               }).catch(function() { tryFetch(i + 1); });
             };
             tryFetch(0);
-              el.innerHTML = '<div class="preview-error">⏳</div>';
-            });
           });
-        }, { rootMargin: '200px' });
+        }, { rootMargin: '100px' });
 
         document.querySelectorAll('.card-preview').forEach(function(el) {
           if (!el.dataset.loaded) observer.observe(el);
