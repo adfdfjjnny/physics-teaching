@@ -52,7 +52,22 @@
       "emoji": "🔵",
       "color": "#0891b2",
       "desc": "电场强度、电场线、电势、电容器等",
-      "programs": [],
+      "programs": [
+        {
+          "file": "旋转圆.html",
+          "title": "旋转圆",
+          "path": "8-dianchang/旋转圆.html",
+          "author": "",
+          "questionFile": ""
+        },
+        {
+          "file": "示玻管3D.html",
+          "title": "示玻管3D",
+          "path": "8-dianchang/示玻管3D.html",
+          "author": "",
+          "questionFile": ""
+        }
+      ],
       "description": "电场强度、电场线、电势、电容器等"
     },
     {
@@ -104,6 +119,6 @@
       "description": "玻尔模型、能级跃迁、原子核等"
     }
   ],
-  "totalPrograms": 3,
-  "updatedAt": "2026-06-28T15:25:49.638Z"
+  "totalPrograms": 5,
+  "updatedAt": "2026-06-28T15:25:55.510Z"
 }
