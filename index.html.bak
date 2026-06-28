@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>高中物理教学AI演示平台（浙工大附属德高物理组）</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+  <!-- 顶部标题栏 -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-top">
+        <div>
+          <h1 class="site-title">高中物理教学AI演示平台</h1>
+          <p class="site-subtitle">浙工大附属德高物理组 · 📧 nifeng0572@163.com</p>
+          <div class="header-buttons">
+            <button class="btn-upload" id="btnOpenUpload" title="上传新的教学程序">
+              <span class="btn-upload-icon">📤</span>
+              上传程序
+            </button>
+            <button class="btn-approve" id="btnOpenApprove" title="资源审核">
+              <span class="btn-upload-icon">📋</span>
+              资源审核
+              <span class="pending-badge" id="pendingBadge" style="display:none;">0</span>
+            </button>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="notice-bar" id="noticeBar">
+            <div class="notice-title-bar">
+              <span>📢 公告栏</span>
+              <button class="notice-edit-btn" id="btnEditNotice" title="编辑公告">✏️</button>
+            </div>
+            <div class="notice-body" id="noticeText">暂无公告，点击 ✏️ 编辑发布</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 分类导航标签 -->
+  <nav class="nav-bar" id="navBar">
+    <!-- 由JS动态渲染 -->
+  </nav>
+  <div class="search-bar">
+    <input type="text" class="search-input" id="searchInput"
+           placeholder="🔍 搜索程序名称..." autocomplete="off">
+    <span class="search-result" id="searchResult"></span>
+  </div>
+
+  <!-- 主内容区 -->
+  <main class="main-content">
+    <!-- 编辑公告弹窗 -->
+    <div class="modal-overlay" id="noticeModal" style="display:none;">
+      <div class="modal-panel modal-panel-sm">
+        <div class="modal-header">
+          <h2>📢 编辑公告</h2>
+          <button class="modal-close" id="btnCloseNotice">&times;</button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label">公告内容</label>
+          <textarea class="form-textarea" id="noticeInput" rows="4"
+                    placeholder="输入公告内容，支持纯文本..."></textarea>
+          <label class="form-label">发布人</label>
+          <input type="text" class="form-input" id="noticeAuthor" placeholder="管理员" autocomplete="off">
+          <label class="form-label">管理员密码</label>
+          <input type="password" class="form-input" id="noticePassword" placeholder="请输入管理员密码" autocomplete="off">
+          <button class="btn-submit" id="btnSaveNotice">发布公告</button>
+          <div class="upload-status" id="noticeStatus" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="category-header" id="categoryHeader">
+      <h2 class="category-title" id="categoryTitle">全部程序</h2>
+      <p class="category-desc" id="categoryDesc"></p>
+      <span class="program-count" id="programCount"></span>
+    </div>
+
+    <div class="card-grid" id="cardGrid"></div>
+
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <div class="empty-icon">📭</div>
+      <h3>暂无教学程序</h3>
+      <p>点击右上角「📤 上传程序」按钮上传你的第一个HTML教学程序</p>
+    </div>
+  </main>
+
+  <!-- 底部信息 -->
+  <footer class="footer">
+    <p>高中物理教学AI演示平台（浙工大附属德高物理组）· Powered by Cloudflare Pages</p>
+    <p class="footer-updated">最后更新：<span id="updateTime">加载中...</span> · 👁️ 访问量：<span id="visitCount">...</span></p>
+  </footer>
+
+  <!-- ======================================== -->
+  <!-- 删除确认弹窗                                -->
+  <!-- ======================================== -->
+  <div class="modal-overlay" id="deleteModal" style="display:none;">
+    <div class="modal-panel modal-panel-sm">
+      <div class="modal-header">
+        <h2>⚠️ 确认删除</h2>
+        <button class="modal-close" id="btnCloseDelete">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="delete-warning">
+          确定要删除程序 <strong id="deleteFileName"></strong> 吗？
+        </p>
+        <p class="delete-hint">此操作不可撤销，删除后约1-2分钟生效。</p>
+
+        <div id="deletePasswordField" style="display:none;">
+          <label class="form-label">管理员密码</label>
+          <input type="password" class="form-input" id="deletePassword"
+                 placeholder="请输入管理员密码" autocomplete="off">
+        </div>
+
+        <div class="delete-actions">
+          <button class="btn-cancel" id="btnCancelDelete">取消</button>
+          <button class="btn-danger" id="btnConfirmDelete">确认删除</button>
+        </div>
+
+        <div class="upload-status" id="deleteStatus" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================== -->
+  <!-- 资源审核弹窗                                -->
+  <!-- ======================================== -->
+  <div class="modal-overlay" id="approveModal" style="display:none;">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h2>📋 资源审核</h2>
+        <button class="modal-close" id="btnCloseApprove">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="approveLogin">
+          <label class="form-label">管理员密码</label>
+          <input type="password" class="form-input" id="approvePassword"
+                 placeholder="请输入管理员密码" autocomplete="off">
+          <button class="btn-submit" id="btnApproveLogin">验证进入</button>
+        </div>
+
+        <div id="approveList" style="display:none;">
+          <p class="approve-count" id="approveCount"></p>
+          <div id="pendingList" class="pending-list"></div>
+          <div class="approve-empty" id="approveEmpty" style="display:none;">
+            ✅ 没有待审批的程序
+          </div>
+        </div>
+
+        <div class="upload-status" id="approveStatus" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================== -->
+  <!-- 移动弹窗                                  -->
+  <!-- ======================================== -->
+  <div class="modal-overlay" id="moveModal" style="display:none;">
+    <div class="modal-panel modal-panel-sm">
+      <div class="modal-header">
+        <h2>📦 移动到其他板块</h2>
+        <button class="modal-close" id="btnCloseMove">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="delete-warning">移动 <strong id="moveFileName"></strong></p>
+        <label class="form-label">目标板块</label>
+        <select class="form-select" id="moveTargetCat">
+          <option value="1-li">🍎 力 — 力学</option>
+          <option value="2-re">🔥 热 — 热学</option>
+          <option value="3-dianlu">⚡ 电路</option>
+          <option value="8-dianchang">🔵 电场</option>
+          <option value="4-dianci">🧲 电磁感应</option>
+          <option value="5-lizi">⚛️ 带电粒子在磁场中运动</option>
+          <option value="6-guang">💡 光 — 光学</option>
+          <option value="7-yuan">🔬 原 — 原子物理</option>
+        </select>
+        <div id="movePasswordField">
+          <label class="form-label">管理员密码</label>
+          <input type="password" class="form-input" id="movePassword"
+                 placeholder="请输入管理员密码" autocomplete="off">
+        </div>
+        <div class="delete-actions">
+          <button class="btn-cancel" id="btnCancelMove">取消</button>
+          <button class="btn-danger" id="btnConfirmMove">确认移动</button>
+        </div>
+        <div class="upload-status" id="moveStatus" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================== -->
+  <!-- 评论弹窗                                  -->
+  <!-- ======================================== -->
+  <div class="modal-overlay" id="commentModal" style="display:none;">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h2>💬 评论 — <span id="commentFileName"></span></h2>
+        <button class="modal-close" id="btnCloseComment">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="comment-list" id="commentList">
+          <p style="color:#94a3b8;text-align:center">加载中...</p>
+        </div>
+        <div class="comment-form">
+          <input type="text" class="form-input" id="commentName" placeholder="你的名字（选填）" autocomplete="off" style="margin-bottom:8px">
+          <textarea class="form-textarea" id="commentMessage" rows="2" placeholder="写评论..."></textarea>
+          <button class="btn-submit" id="btnSendComment">发送评论</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================== -->
+  <!-- 上传弹窗                                  -->
+  <!-- ======================================== -->
+  <div class="modal-overlay" id="uploadModal" style="display:none;">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h2>📤 上传教学程序</h2>
+        <button class="modal-close" id="btnCloseUpload">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <label class="form-label">选择分类</label>
+        <select class="form-select" id="uploadCategory">
+          <option value="1-li">🍎 力 — 力学</option>
+          <option value="2-re">🔥 热 — 热学</option>
+          <option value="3-dianlu">⚡ 电路</option>
+          <option value="8-dianchang">🔵 电场</option>
+          <option value="4-dianci">🧲 电磁感应</option>
+          <option value="5-lizi">⚛️ 带电粒子在磁场中运动</option>
+          <option value="6-guang">💡 光 — 光学</option>
+          <option value="7-yuan">🔬 原 — 原子物理</option>
+        </select>
+
+        <div id="uploadPairs">
+          <!-- 动态生成上传行 -->
+        </div>
+
+        <button class="btn-add-pair" id="btnAddPair">➕ 添加一组</button>
+
+        <div class="upload-status" id="uploadStatus" style="display:none;"></div>
+
+        <button class="btn-submit" id="btnSubmitUpload" disabled>
+          <span id="btnSubmitText">上传到服务器</span>
+          <span class="spinner" id="uploadSpinner" style="display:none;"></span>
+        </button>
+
+        <p class="upload-note">每组一个 HTML 程序 + 一个题目附件（可选），一一配对上传</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================== -->
+  <!-- JavaScript                              -->
+  <!-- ======================================== -->
+  <script>
+    (function() {
+      // ============ Catalog 状态 ============
+      let catalog = null;
+
+      // ============ 加载目录 ============
+      async function loadCatalog() {
+        // 本地优先（快），GitHub 后台静默更新
+        var loaded = false;
+        try {
+          const resp = await fetch('catalog.json?t=' + Date.now());
+          if (resp.ok) { catalog = await resp.json(); loaded = true; }
+        } catch (e) {}
+
+        if (!loaded) {
+          try {
+            const resp = await fetch('https://raw.githubusercontent.com/adfdfjjnny/physics-teaching/main/catalog.json?t=' + Date.now());
+            if (resp.ok) catalog = await resp.json();
+          } catch (e) {}
+        }
+
+        if (!catalog) {
+          document.getElementById('cardGrid').innerHTML = '<div class="load-error">⚠️ 加载失败，请稍后刷新</div>';
+          return;
+        }
+
+        renderNav();
+        showCategory('all');
+        document.getElementById('updateTime').textContent = new Date(catalog.updatedAt).toLocaleString('zh-CN');
+
+        // 后台静默从 GitHub 更新
+        setTimeout(function() {
+          fetch('https://raw.githubusercontent.com/adfdfjjnny/physics-teaching/main/catalog.json?t=' + Date.now())
+            .then(function(r) { return r.json(); })
+            .then(function(remote) {
+              if (remote && remote.totalPrograms !== catalog.totalPrograms) {
+                catalog = remote;
+                renderNav();
+                showCategory(activeCategoryId);
+                document.getElementById('updateTime').textContent = new Date(remote.updatedAt).toLocaleString('zh-CN');
+              }
+            }).catch(function() {});
+        }, 3000);
+      }
+
+      // ============ 渲染导航栏 ============
+      function renderNav() {
+        const nav = document.getElementById('navBar');
+        if (!catalog) return;
+
+        let html = '<button class="nav-tab active" data-cat="all">📋 全部<span class="tab-badge">' +
+          catalog.totalPrograms + '</span></button>';
+
+        catalog.categories.forEach(cat => {
+          html += '<button class="nav-tab" data-cat="' + cat.id + '" style="--cat-color:' + cat.color + '">' +
+            cat.emoji + ' ' + cat.name +
+            '<span class="tab-badge">' + cat.programs.length + '</span>' +
+            '</button>';
+        });
+
+        nav.innerHTML = html;
+
+        nav.querySelectorAll('.nav-tab').forEach(tab => {
+          tab.addEventListener('click', function() {
+            nav.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            showCategory(this.dataset.cat);
+          });
+        });
+      }
+
+      // ============ 显示分类 ============
+      function showCategory(catId) {
+        if (!catalog) return;
+
+        const title = document.getElementById('categoryTitle');
+        const desc = document.getElementById('categoryDesc');
+        const count = document.getElementById('programCount');
+        const grid = document.getElementById('cardGrid');
+        const empty = document.getElementById('emptyState');
+
+        let programs = [];
+
+        if (catId === 'all') {
+          title.textContent = '全部教学程序';
+          desc.textContent = '浏览所有物理板块的交互式演示程序';
+          catalog.categories.forEach(cat => {
+            cat.programs.forEach(p => programs.push({ ...p, category: cat }));
+          });
+        } else {
+          const cat = catalog.categories.find(c => c.id === catId);
+          if (cat) {
+            title.textContent = cat.emoji + ' ' + cat.fullName;
+            desc.textContent = cat.description;
+            programs = cat.programs.map(p => ({ ...p, category: cat }));
+          }
+        }
+
+        count.textContent = '共 ' + programs.length + ' 个程序';
+
+        if (programs.length === 0) {
+          grid.style.display = 'none';
+          empty.style.display = 'block';
+        } else {
+          grid.style.display = 'grid';
+          empty.style.display = 'none';
+          grid.innerHTML = programs.map(p => renderCard(p)).join('');
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function renderCard(program) {
+        const cat = program.category;
+        const data = escapeHtml(JSON.stringify({ category: cat.id, filename: program.file }));
+        const previewUrl = program.path;
+        return `
+          <div class="card" style="--card-accent: ${cat.color}" data-program='${data}'>
+            <div class="card-accent"></div>
+            <h3 class="card-name">${escapeHtml(program.file.replace(/\.html?$/i,''))}</h3>
+            <div class="card-preview" data-preview="${escapeHtml(previewUrl)}">
+              <div class="preview-loading">⏳</div>
+            </div>
+            <div class="card-body card-link" data-filepath="${escapeHtml(program.path)}">
+              <span class="card-cat-badge" style="background:${cat.color}15;color:${cat.color}">
+                ${cat.emoji} ${cat.name}
+              </span>
+              <div class="card-footer">
+                <button class="btn-download" title="下载程序" data-action="download">💾 程序</button>
+                ${program.questionFile ? '<a class="btn-download" title="下载试题：' + escapeHtml(program.questionFile) + '" href="https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + escapeHtml(cat.id + '/' + program.questionFile) + '" download style="text-decoration:none">📝 试题</a>' : ''}
+                <button class="btn-comment" title="查看/添加评论" data-action="comment">💬</button>
+                <button class="btn-move" title="移动到其他板块" data-action="move">📦</button>
+                <button class="btn-delete" title="删除此程序" data-action="delete">🗑</button>
+                <span class="card-arrow">打开 →</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      // ========================================
+      // 上传功能（多组一对一配对）
+      // ========================================
+      const modal = document.getElementById('uploadModal');
+      // 上传功能见 assets/upload.js
+      const uploadSpinner = document.getElementById('uploadSpinner');
+      const uploadStatus = document.getElementById('uploadStatus');
+      const uploadPairs = document.getElementById('uploadPairs');
+      // 所有上传逻辑由 assets/upload.js 处理
+      // 仅保留 Toast 和 formatSize 供复用
+
+
+      // 上传由 upload.js 处理，加载外部脚本
+      var uploadScript = document.createElement('script');
+      uploadScript.src = 'assets/upload.js';
+      document.body.appendChild(uploadScript);
+
+      // closeModal 保留给外部脚本使用
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+
+      function closeModal() {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        resetUploadForm();
+      }
+
+      function resetUploadForm() {
+        fileInput.value = ''; selectedFile = null;
+        filePreview.style.display = 'none';
+        fileDropText.textContent = '点击选择，或拖拽 .html 文件到此处';
+        fileDropText.className = '';
+        questionFile.value = ''; selectedQuestionFile = null;
+        questionPreview.style.display = 'none';
+        questionDropText.textContent = '点击选择题目文件（与该程序配对）';
+        questionDropText.className = '';
+        btnSubmit.disabled = true;
+        uploadStatus.style.display = 'none';
+        uploadStatus.className = 'upload-status';
+        uploadStatus.textContent = '';
+        btnSubmitText.textContent = '上传到服务器';
+        uploadSpinner.style.display = 'none';
+      }
+
+      // 文件选择：click
+      dropZone.addEventListener('click', () => fileInput.click());
+      questionDropZone.addEventListener('click', () => questionFile.click());
+
+      // HTML 文件选择
+      fileInput.addEventListener('change', function() {
+        if (fileInput.files.length > 0) handleHtmlFile(fileInput.files[0]);
+      });
+      dropZone.addEventListener('dragover', function(e) { e.preventDefault(); dropZone.classList.add('dragover'); });
+      dropZone.addEventListener('dragleave', function() { dropZone.classList.remove('dragover'); });
+      dropZone.addEventListener('drop', function(e) { e.preventDefault(); dropZone.classList.remove('dragover'); if (e.dataTransfer.files.length > 0) handleHtmlFile(e.dataTransfer.files[0]); });
+
+      function handleHtmlFile(f) {
+        if (!f.name.match(/\.html?$/i)) { alert('请选择 .html 文件'); return; }
+        if (f.size > 5*1024*1024) { alert('文件不能超过 5MB'); return; }
+        selectedFile = f;
+        filePreview.style.display = 'flex';
+        filePreviewName.textContent = f.name + ' (' + formatSize(f.size) + ')';
+        fileDropText.textContent = '✅ 已选择';
+        fileDropText.className = 'text-success';
+        btnSubmit.disabled = false;
+      }
+
+      document.getElementById('btnRemoveFile').addEventListener('click', function(e) {
+        e.stopPropagation(); e.preventDefault();
+        fileInput.value = ''; selectedFile = null;
+        filePreview.style.display = 'none';
+        fileDropText.textContent = '点击选择，或拖拽 .html 文件到此处';
+        fileDropText.className = '';
+        btnSubmit.disabled = true;
+      });
+
+      // 题目文件选择
+      questionFile.addEventListener('change', function() {
+        if (questionFile.files.length > 0) {
+          var f = questionFile.files[0];
+          if (f.size > 10*1024*1024) { alert('题目文件不能超过 10MB'); return; }
+          selectedQuestionFile = f;
+          questionPreview.style.display = 'flex';
+          questionPreviewName.textContent = f.name + ' (' + formatSize(f.size) + ')';
+          questionDropText.textContent = '✅ 已选择';
+          questionDropText.className = 'text-success';
+        }
+      });
+
+      document.getElementById('btnRemoveQuestion').addEventListener('click', function(e) {
+        e.stopPropagation(); e.preventDefault();
+        questionFile.value = ''; selectedQuestionFile = null;
+        questionPreview.style.display = 'none';
+        questionDropText.textContent = '点击选择题目文件（与该程序配对）';
+        questionDropText.className = '';
+      });
+
+      function formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+      }
+
+      // 提交上传（单程序 + 单题目配对）
+      btnSubmit.addEventListener('click', async () => {
+        if (!selectedFile) return;
+        const category = document.getElementById('uploadCategory').value;
+        btnSubmit.disabled = true;
+        uploadSpinner.style.display = 'inline-block';
+        uploadStatus.style.display = 'block';
+        uploadStatus.className = 'upload-status status-info';
+        uploadStatus.textContent = '⏳ 正在上传: ' + selectedFile.name;
+
+        try {
+          var base64 = await readFileAsBase64(selectedFile);
+          var body = { category: category, filename: selectedFile.name, content: base64 };
+          if (selectedQuestionFile) {
+            body.questionContent = await readFileAsBase64(selectedQuestionFile);
+            body.questionFile = selectedQuestionFile.name;
+          }
+          var resp = await fetch('/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          var data = await resp.json();
+          if (data.ok) {
+            uploadStatus.className = 'upload-status status-success';
+            uploadStatus.innerHTML = '✅ ' + escapeHtml(data.message) + '<br><small>' + escapeHtml(data.detail || '') + '</small>';
+            uploadSpinner.style.display = 'none';
+            btnSubmitText.textContent = '上传成功！';
+            setTimeout(function() { closeModal(); showToast('文件已提交，等待资源审核'); }, 3000);
+          } else {
+            uploadStatus.className = 'upload-status status-error';
+            uploadStatus.textContent = '❌ ' + (data.error || '失败');
+            btnSubmit.disabled = false;
+            uploadSpinner.style.display = 'none';
+            btnSubmitText.textContent = '重试';
+          }
+        } catch (err) {
+          uploadStatus.className = 'upload-status status-error';
+          uploadStatus.textContent = '❌ 网络错误';
+          btnSubmit.disabled = false;
+          uploadSpinner.style.display = 'none';
+          btnSubmitText.textContent = '重试';
+        }
+      });
+
+      function readFileAsBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            // 去掉 "data:...;base64," 前缀
+            const base64 = reader.result.split(',')[1];
+            resolve(base64);
+          };
+          reader.onerror = () => reject(new Error('文件读取失败'));
+          reader.readAsDataURL(file);
+        });
+      }
+
+      // Toast 提示
+      function showToast(msg) {
+        let toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => toast.remove(), 300);
+        }, 4000);
+      }
+
+      // ========================================
+      // 删除功能
+      // ========================================
+      const deleteModal = document.getElementById('deleteModal');
+      const deleteFileName = document.getElementById('deleteFileName');
+      const deletePasswordField = document.getElementById('deletePasswordField');
+      const deleteStatus = document.getElementById('deleteStatus');
+      let deleteTarget = null;
+
+      // 委托模式：监听所有卡片上的点击
+      document.getElementById('cardGrid').addEventListener('click', (e) => {
+        // 卡片主体点击 → 打开程序（fetch + 正确渲染）
+        const cardLink = e.target.closest('.card-link');
+        if (cardLink && !e.target.closest('[data-action]')) {
+          e.preventDefault();
+          const filePath = cardLink.dataset.filepath;
+          if (filePath) openProgram(filePath);
+          return;
+        }
+
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (btn.dataset.action === 'delete') {
+          const card = btn.closest('.card');
+          if (!card) return;
+          try { deleteTarget = JSON.parse(card.dataset.program); } catch { return; }
+          deleteFileName.textContent = deleteTarget.filename;
+          deleteStatus.style.display = 'none';
+          deleteStatus.className = 'upload-status';
+          deletePasswordField.style.display = 'none';
+          document.getElementById('deletePassword').value = '';
+          document.getElementById('btnConfirmDelete').disabled = false;
+          deleteModal.style.display = 'flex';
+          document.body.style.overflow = 'hidden';
+          checkDeletePasswordRequired();
+        }
+
+        if (btn.dataset.action === 'download') {
+          const card = btn.closest('.card');
+          if (!card) return;
+          try { downloadTarget = JSON.parse(card.dataset.program); } catch { return; }
+          downloadFile();
+        }
+
+        if (btn.dataset.action === 'move') {
+          const card = btn.closest('.card');
+          if (!card) return;
+          try { moveTarget = JSON.parse(card.dataset.program); } catch { return; }
+          openMoveModal();
+        }
+
+        if (btn.dataset.action === 'comment') {
+          const card = btn.closest('.card');
+          if (!card) return;
+          try { commentTarget = JSON.parse(card.dataset.program); } catch { return; }
+          openCommentModal();
+        }
+      });
+
+      async function checkDeletePasswordRequired() {
+        try {
+          const resp = await fetch('/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category: '1-li', filename: '_check_.html' })
+          });
+          if (resp.status === 403) {
+            deletePasswordField.style.display = 'block';
+          }
+        } catch {}
+      }
+
+      document.getElementById('btnCloseDelete').addEventListener('click', closeDeleteModal);
+      document.getElementById('btnCancelDelete').addEventListener('click', closeDeleteModal);
+      deleteModal.addEventListener('click', (e) => {
+        if (e.target === deleteModal) closeDeleteModal();
+      });
+
+      function closeDeleteModal() {
+        deleteModal.style.display = 'none';
+        document.body.style.overflow = '';
+        deleteTarget = null;
+        deleteStatus.style.display = 'none';
+      }
+
+      document.getElementById('btnConfirmDelete').addEventListener('click', async () => {
+        if (!deleteTarget) return;
+        const btn = document.getElementById('btnConfirmDelete');
+        btn.disabled = true;
+        btn.textContent = '删除中...';
+        deleteStatus.style.display = 'block';
+        deleteStatus.className = 'upload-status status-info';
+        deleteStatus.textContent = '⏳ 正在删除...';
+
+        try {
+          const body = {
+            category: deleteTarget.category,
+            filename: deleteTarget.filename
+          };
+          const pw = document.getElementById('deletePassword').value;
+          if (pw) body.password = pw;
+
+          const resp = await fetch('/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          const data = await resp.json();
+
+          if (data.ok) {
+            deleteStatus.className = 'upload-status status-success';
+            deleteStatus.innerHTML = '✅ ' + escapeHtml(data.message) + '<br><small>' + escapeHtml(data.detail || '') + '</small>';
+            setTimeout(() => {
+              closeDeleteModal();
+              showToast('程序已删除，约1-2分钟后刷新页面即可生效');
+            }, 2000);
+          } else {
+            deleteStatus.className = 'upload-status status-error';
+            deleteStatus.textContent = '❌ ' + (data.error || '删除失败');
+            btn.disabled = false;
+            btn.textContent = '确认删除';
+          }
+        } catch (err) {
+          deleteStatus.className = 'upload-status status-error';
+          deleteStatus.textContent = '❌ 网络错误';
+          btn.disabled = false;
+          btn.textContent = '确认删除';
+        }
+      });
+
+      // 打开程序：fetch HTML并以正确MIME渲染
+      async function openProgram(filePath) {
+        const url = 'https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + filePath;
+        try {
+          const resp = await fetch(url);
+          if (!resp.ok) throw new Error('文件获取失败');
+          const html = await resp.text();
+          const w = window.open('', '_blank');
+          w.document.write(html);
+          w.document.close();
+        } catch (err) {
+          alert('打开失败：' + err.message + '\n\n尝试直接链接...');
+          window.open(url, '_blank');
+        }
+      }
+
+      // ========================================
+      // 下载功能
+      // ========================================
+      let downloadTarget = null;
+
+      async function downloadFile() {
+        if (!downloadTarget) return;
+        const path = downloadTarget.category + '/' + downloadTarget.filename;
+
+        // 检查是否需要下载密码
+        let needPwd = false;
+        try {
+          const check = await fetch('/check-download', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          });
+          needPwd = (check.status === 403);
+        } catch {}
+
+        if (needPwd) {
+          const pw = prompt('请输入下载密码：' + downloadTarget.filename);
+          if (!pw) return;
+          const verify = await fetch('/check-download', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pw })
+          });
+          if (verify.status === 403) {
+            alert('下载密码错误！');
+            return;
+          }
+        }
+
+        // 触发下载
+        try {
+          const dlUrl = 'https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + path;
+          const resp = await fetch(dlUrl);
+          if (!resp.ok) throw new Error('文件获取失败');
+          const blob = await resp.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = downloadTarget.filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showToast('✅ 下载完成：' + downloadTarget.filename);
+        } catch (err) {
+          alert('下载失败：' + err.message);
+        }
+      }
+
+            // ========================================
+      // 评论功能
+      // ========================================
+      var commentModal = document.getElementById('commentModal');
+      var commentTarget = null;
+
+      function openCommentModal() {
+        if (!commentTarget) return;
+        document.getElementById('commentFileName').textContent = commentTarget.filename;
+        document.getElementById('commentList').innerHTML = '<p style="color:#94a3b8;text-align:center">加载中...</p>';
+        document.getElementById('commentName').value = '';
+        document.getElementById('commentMessage').value = '';
+        commentModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        loadComments();
+      }
+
+      document.getElementById('btnCloseComment').addEventListener('click', function() {
+        commentModal.style.display = 'none'; document.body.style.overflow = '';
+      });
+      commentModal.addEventListener('click', function(e) { if (e.target === commentModal) { commentModal.style.display = 'none'; document.body.style.overflow = ''; } });
+
+      async function loadComments() {
+        if (!commentTarget) return;
+        try {
+          var resp = await fetch('/comments?cat=' + commentTarget.category + '&file=' + commentTarget.filename);
+          var data = await resp.json();
+          var list = document.getElementById('commentList');
+          if (data.ok && data.comments.length > 0) {
+            list.innerHTML = data.comments.map(function(c) {
+              return '<div class="comment-item"><div class="comment-meta"><strong>' + escapeHtml(c.name) + '</strong> · <span>' + new Date(c.time).toLocaleString('zh-CN') + '</span></div><div class="comment-msg">' + escapeHtml(c.message) + '</div></div>';
+            }).join('');
+          } else {
+            list.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px">暂无评论，来说两句吧</p>';
+          }
+        } catch (e) { document.getElementById('commentList').innerHTML = '<p style="color:#dc2626">加载失败</p>'; }
+      }
+
+      document.getElementById('btnSendComment').addEventListener('click', async function() {
+        if (!commentTarget) return;
+        var name = document.getElementById('commentName').value.trim();
+        var message = document.getElementById('commentMessage').value.trim();
+        if (!message) { alert('请输入评论内容'); return; }
+
+        document.getElementById('btnSendComment').disabled = true;
+        document.getElementById('btnSendComment').textContent = '发送中...';
+
+        try {
+          var resp = await fetch('/comments?cat=' + commentTarget.category + '&file=' + commentTarget.filename, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name || '匿名', message: message })
+          });
+          var data = await resp.json();
+          if (data.ok) {
+            document.getElementById('commentMessage').value = '';
+            loadComments();
+          } else {
+            alert('发送失败: ' + (data.error || ''));
+          }
+        } catch (e) { alert('网络错误'); }
+        document.getElementById('btnSendComment').disabled = false;
+        document.getElementById('btnSendComment').textContent = '发送评论';
+      });
+
+      // ========================================
+      // 移动功能
+      // ========================================
+      const moveModal = document.getElementById('moveModal');
+      let moveTarget = null;
+
+      function openMoveModal() {
+        if (!moveTarget) return;
+        document.getElementById('moveFileName').textContent = moveTarget.filename;
+        document.getElementById('moveTargetCat').value = moveTarget.category;
+        document.getElementById('movePassword').value = '';
+        document.getElementById('moveStatus').style.display = 'none';
+        document.getElementById('btnConfirmMove').disabled = false;
+        moveModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+
+      document.getElementById('btnCloseMove').addEventListener('click', closeMoveModal);
+      document.getElementById('btnCancelMove').addEventListener('click', closeMoveModal);
+      moveModal.addEventListener('click', (e) => { if (e.target === moveModal) closeMoveModal(); });
+
+      function closeMoveModal() {
+        moveModal.style.display = 'none';
+        document.body.style.overflow = '';
+        moveTarget = null;
+      }
+
+      document.getElementById('btnConfirmMove').addEventListener('click', async () => {
+        if (!moveTarget) return;
+        const toCategory = document.getElementById('moveTargetCat').value;
+        const password = document.getElementById('movePassword').value;
+        const btn = document.getElementById('btnConfirmMove');
+        const status = document.getElementById('moveStatus');
+        btn.disabled = true; btn.textContent = '移动中...';
+        status.style.display = 'block';
+        status.className = 'upload-status status-info';
+        status.textContent = '⏳ 正在移动...';
+
+        try {
+          const body = { fromCategory: moveTarget.category, toCategory, filename: moveTarget.filename };
+          if (password) body.password = password;
+          const resp = await fetch('/move', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          const data = await resp.json();
+          if (data.ok) {
+            status.className = 'upload-status status-success';
+            status.textContent = '✅ ' + data.message;
+            setTimeout(() => { closeMoveModal(); showToast('程序已移动，稍后刷新即可看到'); }, 2000);
+          } else {
+            status.className = 'upload-status status-error';
+            status.textContent = '❌ ' + (data.error || '失败');
+            btn.disabled = false; btn.textContent = '确认移动';
+          }
+        } catch (err) {
+          status.className = 'upload-status status-error';
+          status.textContent = '❌ 网络错误';
+          btn.disabled = false; btn.textContent = '确认移动';
+        }
+      });
+
+      // ========================================
+      // 资源审核
+      // ========================================
+      const approveModal = document.getElementById('approveModal');
+      const approveStatus = document.getElementById('approveStatus');
+      let approvePassword = '';
+
+      // 打开审批弹窗
+      document.getElementById('btnOpenApprove').addEventListener('click', () => {
+        document.getElementById('approveLogin').style.display = 'block';
+        document.getElementById('approveList').style.display = 'none';
+        document.getElementById('approvePassword').value = '';
+        approveStatus.style.display = 'none';
+        approveModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      });
+
+      document.getElementById('btnCloseApprove').addEventListener('click', closeApproveModal);
+      approveModal.addEventListener('click', (e) => {
+        if (e.target === approveModal) closeApproveModal();
+      });
+
+      function closeApproveModal() {
+        approveModal.style.display = 'none';
+        document.body.style.overflow = '';
+        approvePassword = '';
+      }
+
+      // 验证密码并加载待审列表
+      document.getElementById('btnApproveLogin').addEventListener('click', async () => {
+        approvePassword = document.getElementById('approvePassword').value;
+        if (!approvePassword) { alert('请输入管理员密码'); return; }
+
+        approveStatus.style.display = 'block';
+        approveStatus.className = 'upload-status status-info';
+        approveStatus.textContent = '⏳ 加载中...';
+
+        try {
+          const resp = await fetch('/list-pending');
+          const data = await resp.json();
+
+          document.getElementById('approveLogin').style.display = 'none';
+          document.getElementById('approveList').style.display = 'block';
+          approveStatus.style.display = 'none';
+
+          renderPendingList(data.items || []);
+        } catch (err) {
+          approveStatus.className = 'upload-status status-error';
+          approveStatus.textContent = '❌ 加载失败: ' + err.message;
+        }
+      });
+
+      function renderPendingList(items) {
+        const list = document.getElementById('pendingList');
+        const empty = document.getElementById('approveEmpty');
+        const count = document.getElementById('approveCount');
+
+        count.textContent = '待审批：' + items.length + ' 个程序';
+
+        if (items.length === 0) {
+          list.innerHTML = '';
+          empty.style.display = 'block';
+        } else {
+          empty.style.display = 'none';
+          list.innerHTML = items.map(item => `
+            <div class="pending-item">
+              <div class="pending-info">
+                <span class="pending-cat">${getCatEmoji(item.category)} ${item.category}</span>
+                <strong>${escapeHtml(item.title)}</strong>
+                <span class="pending-file">${escapeHtml(item.filename)}</span>
+              </div>
+              <div class="pending-actions">
+                <button class="btn-approve-item" data-action="approve"
+                        data-cat="${item.category}" data-file="${escapeHtml(item.filename)}">✅ 通过</button>
+                <button class="btn-reject-item" data-action="reject"
+                        data-cat="${item.category}" data-file="${escapeHtml(item.filename)}">❌ 拒绝</button>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        // 绑定审批按钮
+        list.querySelectorAll('[data-action="approve"]').forEach(btn => {
+          btn.addEventListener('click', () => handleApprove(btn.dataset.cat, btn.dataset.file));
+        });
+        list.querySelectorAll('[data-action="reject"]').forEach(btn => {
+          btn.addEventListener('click', () => handleReject(btn.dataset.cat, btn.dataset.file));
+        });
+      }
+
+      function getCatEmoji(id) {
+        const map = { '1-li':'🍎','2-re':'🔥','3-dianlu':'⚡','4-dianci':'🧲','5-lizi':'⚛️','6-guang':'💡','7-yuan':'🔬' };
+        return map[id] || '📄';
+      }
+
+      async function handleApprove(category, filename) {
+        if (!confirm('确定通过「' + filename + '」？')) return;
+        approveStatus.style.display = 'block';
+        approveStatus.className = 'upload-status status-info';
+        approveStatus.textContent = '⏳ 审批中...';
+
+        try {
+          const resp = await fetch('/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category, filename, password: approvePassword })
+          });
+          const data = await resp.json();
+          if (data.ok) {
+            approveStatus.className = 'upload-status status-success';
+            approveStatus.textContent = '✅ ' + data.message;
+            // 刷新列表
+            setTimeout(async () => {
+              const r = await fetch('/list-pending');
+              renderPendingList((await r.json()).items || []);
+              approveStatus.style.display = 'none';
+              loadPendingCount();
+            }, 1000);
+          } else {
+            approveStatus.className = 'upload-status status-error';
+            approveStatus.textContent = '❌ ' + (data.error || '失败');
+          }
+        } catch (err) {
+          approveStatus.className = 'upload-status status-error';
+          approveStatus.textContent = '❌ 网络错误';
+        }
+      }
+
+      async function handleReject(category, filename) {
+        if (!confirm('确定拒绝「' + filename + '」？此操作不可撤销。')) return;
+        approveStatus.style.display = 'block';
+        approveStatus.className = 'upload-status status-info';
+        approveStatus.textContent = '⏳ 处理中...';
+
+        try {
+          const resp = await fetch('/reject', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category, filename, password: approvePassword })
+          });
+          const data = await resp.json();
+          if (data.ok) {
+            approveStatus.className = 'upload-status status-success';
+            approveStatus.textContent = '✅ ' + data.message;
+            setTimeout(async () => {
+              const r = await fetch('/list-pending');
+              renderPendingList((await r.json()).items || []);
+              approveStatus.style.display = 'none';
+              loadPendingCount();
+            }, 1000);
+          } else {
+            approveStatus.className = 'upload-status status-error';
+            approveStatus.textContent = '❌ ' + (data.error || '失败');
+          }
+        } catch (err) {
+          approveStatus.className = 'upload-status status-error';
+          approveStatus.textContent = '❌ 网络错误';
+        }
+      }
+
+      // 加载待审批数量
+      async function loadPendingCount() {
+        try {
+          const resp = await fetch('/list-pending');
+          const data = await resp.json();
+          const badge = document.getElementById('pendingBadge');
+          if (data.total > 0) {
+            badge.style.display = 'inline-block';
+            badge.textContent = data.total;
+          } else {
+            badge.style.display = 'none';
+          }
+        } catch {}
+      }
+
+      // ============ 搜索 ============
+      var searchInput = document.getElementById('searchInput');
+      var searchResult = document.getElementById('searchResult');
+      var searchTimer;
+
+      searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(doSearch, 250);
+      });
+
+      function doSearch() {
+        var query = searchInput.value.trim().toLowerCase();
+        if (!query) {
+          showCategory(activeCategoryId);
+          searchResult.textContent = '';
+          return;
+        }
+
+        if (!catalog) return;
+        var results = [];
+        catalog.categories.forEach(function(cat) {
+          cat.programs.forEach(function(p) {
+            p.category = cat;
+            if (p.title.toLowerCase().indexOf(query) >= 0 || p.file.toLowerCase().indexOf(query) >= 0 || (cat.name + cat.fullName).indexOf(query) >= 0) {
+              results.push(p);
+            }
+          });
+        });
+
+        document.getElementById('categoryTitle').textContent = '🔍 搜索: ' + query;
+        document.getElementById('categoryDesc').textContent = '';
+        searchResult.textContent = '找到 ' + results.length + ' 个程序';
+        document.getElementById('programCount').textContent = '';
+
+        var grid = document.getElementById('cardGrid');
+        var empty = document.getElementById('emptyState');
+        if (results.length === 0) {
+          grid.style.display = 'none';
+          empty.style.display = 'block';
+          empty.querySelector('h3').textContent = '未找到匹配的程序';
+          empty.querySelector('p').textContent = '试试其他关键词';
+        } else {
+          grid.style.display = 'grid';
+          empty.style.display = 'none';
+          grid.innerHTML = results.map(function(p) { return renderCard(p); }).join('');
+          setTimeout(loadPreviews, 300);
+        }
+      }
+
+      // 启动时加载待审批数量
+      loadPendingCount();
+      // 每30秒刷新一次
+      setInterval(loadPendingCount, 30000);
+
+      // ESC 关闭弹窗（更新以包含审批弹窗）
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (modal.style.display === 'flex') closeModal();
+          if (deleteModal.style.display === 'flex') closeDeleteModal();
+          if (approveModal.style.display === 'flex') closeApproveModal();
+          if (moveModal.style.display === 'flex') closeMoveModal();
+          if (noticeModal.style.display === 'flex') { noticeModal.style.display = 'none'; document.body.style.overflow = ''; }
+        }
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.style.display === 'flex') {
+          closeModal();
+        }
+      });
+
+      // ============ 卡片预览懒加载 ============
+      function loadPreviews() {
+        var observer = new IntersectionObserver(function(entries) {
+          entries.forEach(function(entry) {
+            if (!entry.isIntersecting) return;
+            var el = entry.target;
+            if (el.dataset.loaded) return;
+            el.dataset.loaded = '1';
+            observer.unobserve(el);
+            var path = el.dataset.preview;
+            if (!path) return;
+            var url = 'https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + path;
+            fetch(url).then(function(r) { return r.text(); }).then(function(html) {
+              var iframe = document.createElement('iframe');
+              iframe.className = 'preview-frame';
+              iframe.sandbox = 'allow-scripts allow-same-origin';
+              iframe.scrolling = 'no';
+              iframe.srcdoc = html;
+              iframe.onload = function() { iframe.style.opacity = '1'; };
+              el.innerHTML = '';
+              el.appendChild(iframe);
+            }).catch(function() {
+              el.innerHTML = '<div class="preview-error">⏳</div>';
+            });
+          });
+        }, { rootMargin: '200px' });
+
+        document.querySelectorAll('.card-preview').forEach(function(el) {
+          if (!el.dataset.loaded) observer.observe(el);
+        });
+      }
+
+      // 每次切换分类后加载预览
+      var origShowCategory = showCategory;
+      showCategory = function(catId) {
+        origShowCategory(catId);
+        setTimeout(loadPreviews, 300);
+      };
+
+      // ============ 通知公告 ============
+      var noticeModal = document.getElementById('noticeModal');
+
+      loadNotice();
+      document.getElementById('btnEditNotice').addEventListener('click', function() {
+        var currentText = document.getElementById('noticeText').textContent;
+        if (currentText === '暂无公告，点击 ✏️ 编辑发布') currentText = '';
+        document.getElementById('noticeInput').value = currentText;
+        document.getElementById('noticeAuthor').value = '管理员';
+        document.getElementById('noticePassword').value = '';
+        document.getElementById('noticeStatus').style.display = 'none';
+        noticeModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      });
+      document.getElementById('btnCloseNotice').addEventListener('click', function() {
+        noticeModal.style.display = 'none';
+        document.body.style.overflow = '';
+      });
+      noticeModal.addEventListener('click', function(e) { if (e.target === noticeModal) { noticeModal.style.display = 'none'; document.body.style.overflow = ''; } });
+
+      document.getElementById('btnSaveNotice').addEventListener('click', async function() {
+        var text = document.getElementById('noticeInput').value.trim();
+        var author = document.getElementById('noticeAuthor').value.trim() || '管理员';
+        var password = document.getElementById('noticePassword').value;
+        var status = document.getElementById('noticeStatus');
+        if (!text) { alert('请输入公告内容'); return; }
+        if (!password) { alert('请输入管理员密码'); return; }
+
+        status.style.display = 'block';
+        status.className = 'upload-status status-info';
+        status.textContent = '⏳ 发布中...';
+
+        try {
+          var resp = await fetch('/notice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text, author: author, password: password })
+          });
+          var data = await resp.json();
+          if (data.ok) {
+            status.className = 'upload-status status-success';
+            status.textContent = '✅ 公告已发布';
+            document.getElementById('noticeText').textContent = data.notice.text;
+            document.getElementById('noticeTime').textContent = new Date(data.notice.updatedAt).toLocaleString('zh-CN');
+            document.getElementById('noticeBar').style.display = 'flex';
+            setTimeout(function() { noticeModal.style.display = 'none'; document.body.style.overflow = ''; }, 1500);
+          } else {
+            status.className = 'upload-status status-error';
+            status.textContent = '❌ ' + (data.error || '发布失败');
+          }
+        } catch (e) {
+          status.className = 'upload-status status-error';
+          status.textContent = '❌ 网络错误';
+        }
+      });
+
+      async function loadNotice() {
+        try {
+          var resp = await fetch('/notice');
+          var data = await resp.json();
+          if (data.ok && data.notice && data.notice.text) {
+            document.getElementById('noticeText').textContent = data.notice.text;
+            document.getElementById('noticeTime').textContent = new Date(data.notice.updatedAt).toLocaleString('zh-CN');
+          }
+        } catch (e) {}
+      }
+
+      // ============ 访问计数 ============
+      fetch('/counter').then(function(r) { return r.json(); }).then(function(d) {
+        if (d.count > 0) document.getElementById('visitCount').textContent = d.count.toLocaleString();
+      }).catch(function() {});
+
+      // ============ 启动 ============
+      loadCatalog();
+    })();
+  </script>
+</body>
+</html>
