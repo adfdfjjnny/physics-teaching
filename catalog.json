@@ -118,6 +118,13 @@
           "path": "6-guang/多普勒效应演示终版.html",
           "author": "",
           "questionFile": ""
+        },
+        {
+          "file": "水下点光源（全反射）.html",
+          "title": "水下点光源（全反射）",
+          "path": "6-guang/水下点光源（全反射）.html",
+          "author": "{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/repos/contents#get-repository-content\",\"status\":\"404\"}",
+          "questionFile": ""
         }
       ],
       "description": "几何光学、波动光学、干涉衍射等"
@@ -133,6 +140,6 @@
       "description": "玻尔模型、能级跃迁、原子核等"
     }
   ],
-  "totalPrograms": 7,
-  "updatedAt": "2026-06-28T15:26:34.948Z"
+  "totalPrograms": 8,
+  "updatedAt": "2026-06-28T15:26:43.462Z"
 }
