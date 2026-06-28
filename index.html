@@ -264,42 +264,16 @@
 
       // ============ 加载目录 ============
       async function loadCatalog() {
-        // 本地优先（快），GitHub 后台静默更新
-        var loaded = false;
         try {
-          const resp = await fetch('catalog.json?t=' + Date.now());
-          if (resp.ok) { catalog = await resp.json(); loaded = true; }
-        } catch (e) {}
-
-        if (!loaded) {
-          try {
-            const resp = await fetch('https://raw.githubusercontent.com/adfdfjjnny/physics-teaching/main/catalog.json?t=' + Date.now());
-            if (resp.ok) catalog = await resp.json();
-          } catch (e) {}
-        }
-
-        if (!catalog) {
+          var resp = await fetch('catalog.json?t=' + Date.now());
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          catalog = await resp.json();
+          renderNav();
+          showCategory('all');
+          document.getElementById('updateTime').textContent = new Date(catalog.updatedAt).toLocaleString('zh-CN');
+        } catch (e) {
           document.getElementById('cardGrid').innerHTML = '<div class="load-error">⚠️ 加载失败，请稍后刷新</div>';
-          return;
         }
-
-        renderNav();
-        showCategory('all');
-        document.getElementById('updateTime').textContent = new Date(catalog.updatedAt).toLocaleString('zh-CN');
-
-        // 后台静默从 GitHub 更新
-        setTimeout(function() {
-          fetch('https://raw.githubusercontent.com/adfdfjjnny/physics-teaching/main/catalog.json?t=' + Date.now())
-            .then(function(r) { return r.json(); })
-            .then(function(remote) {
-              if (remote && remote.totalPrograms !== catalog.totalPrograms) {
-                catalog = remote;
-                renderNav();
-                showCategory(activeCategoryId);
-                document.getElementById('updateTime').textContent = new Date(remote.updatedAt).toLocaleString('zh-CN');
-              }
-            }).catch(function() {});
-        }, 3000);
       }
 
       // ============ 渲染导航栏 ============
@@ -1025,10 +999,9 @@
         }
       }
 
-      // 启动时加载待审批数量
-      loadPendingCount();
-      // 每30秒刷新一次
-      setInterval(loadPendingCount, 30000);
+      // 延迟加载待审批数量
+      setTimeout(loadPendingCount, 1500);
+      setInterval(loadPendingCount, 60000);
 
       // ESC 关闭弹窗（更新以包含审批弹窗）
       document.addEventListener('keydown', (e) => {
@@ -1071,7 +1044,7 @@
               el.innerHTML = '<div class="preview-error">⏳</div>';
             });
           });
-        }, { rootMargin: '200px' });
+        }, { rootMargin: '100px' });
 
         document.querySelectorAll('.card-preview').forEach(function(el) {
           if (!el.dataset.loaded) observer.observe(el);
@@ -1088,7 +1061,7 @@
       // ============ 通知公告 ============
       var noticeModal = document.getElementById('noticeModal');
 
-      loadNotice();
+      setTimeout(loadNotice, 1000);
       document.getElementById('btnEditNotice').addEventListener('click', function() {
         var currentText = document.getElementById('noticeText').textContent;
         if (currentText === '暂无公告，点击 ✏️ 编辑发布') currentText = '';
@@ -1152,15 +1125,17 @@
         } catch (e) {}
       }
 
-      // ============ 访问计数 ============
-      fetch('/counter').then(function(r) { return r.json(); }).then(function(d) {
-        if (d.count > 0) document.getElementById('visitCount').textContent = d.count.toLocaleString();
-      }).catch(function() {});
+      // ============ 访问计数（延迟加载） ============
+      setTimeout(function() {
+        fetch('/counter').then(function(r) { return r.json(); }).then(function(d) {
+          if (d.count > 0) document.getElementById('visitCount').textContent = d.count.toLocaleString();
+        }).catch(function() {});
+      }, 2000);
 
       // ============ 启动 ============
       loadCatalog();
     })();
   </script>
-  <script src="assets/upload.js"></script>
+  <script src="assets/upload.js" defer></script>
 </body>
 </html>
