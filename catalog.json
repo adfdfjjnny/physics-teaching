@@ -15,6 +15,12 @@
           "author": ""
         },
         {
+          "file": "wave_interference.html",
+          "title": "wave interference",
+          "path": "1-li/wave_interference.html",
+          "author": ""
+        },
+        {
           "file": "水下点光源（全反射）.html",
           "title": "水下点光源（全反射）",
           "path": "1-li/水下点光源（全反射）.html",
@@ -113,6 +119,12 @@
       "desc": "几何光学、波动光学、干涉衍射等",
       "programs": [
         {
+          "file": "多普勒效应演示终版.html",
+          "title": "多普勒效应演示终版",
+          "path": "6-guang/多普勒效应演示终版.html",
+          "author": ""
+        },
+        {
           "file": "水下点光源（全反射）.html",
           "title": "水下点光源（全反射）",
           "path": "6-guang/水下点光源（全反射）.html",
@@ -132,6 +144,6 @@
       "description": "玻尔模型、能级跃迁、原子核等"
     }
   ],
-  "totalPrograms": 8,
-  "updatedAt": "2026-06-28T06:10:42.036Z"
+  "totalPrograms": 10,
+  "updatedAt": "2026-06-28T06:10:48.108Z"
 }
