@@ -238,7 +238,7 @@
         </select>
 
         <!-- 文件选择 -->
-        <label class="form-label">选择 HTML 文件（可多选）</label>
+        <label class="form-label">选择 HTML 程序文件（可多选）</label>
         <div class="file-drop-zone" id="fileDropZone">
           <input type="file" id="uploadFile" accept=".html,.htm" class="file-input-hidden" multiple>
           <div class="file-drop-content">
@@ -247,9 +247,22 @@
             <span class="file-drop-hint">每个最大 5MB</span>
           </div>
         </div>
-
-        <!-- 文件列表预览 -->
         <div class="file-list" id="fileList" style="display:none;"></div>
+
+        <label class="form-label">📝 题目附件（可选，Word/JPG）</label>
+        <div class="file-drop-zone file-drop-zone-sm" id="questionDropZone">
+          <input type="file" id="questionFile" accept=".doc,.docx,.jpg,.jpeg,.png,.pdf" class="file-input-hidden">
+          <div class="file-drop-content">
+            <span class="file-drop-icon">📄</span>
+            <span id="questionDropText">点击选择题目文件（Word/图片/PDF）</span>
+            <span class="file-drop-hint">最大 10MB</span>
+          </div>
+        </div>
+        <div class="file-preview" id="questionPreview" style="display:none;">
+          <span class="file-preview-icon">📎</span>
+          <span class="file-preview-name" id="questionPreviewName"></span>
+          <button class="file-remove" id="btnRemoveQuestion">✕</button>
+        </div>
 
         <!-- 上传状态提示 -->
         <div class="upload-status" id="uploadStatus" style="display:none;"></div>
@@ -377,6 +390,7 @@
                 ${cat.emoji} ${cat.name}
               </span>
               <div class="card-footer">
+                ${program.questionFile ? '<a class="btn-comment" title="下载题目：' + escapeHtml(program.questionFile) + '" href="https://cdn.jsdelivr.net/gh/adfdfjjnny/physics-teaching@main/' + escapeHtml(cat.id + '/' + program.questionFile) + '" download style="text-decoration:none">📝</a>' : ''}
                 <button class="btn-comment" title="查看/添加评论" data-action="comment">💬</button>
                 <button class="btn-move" title="移动到其他板块" data-action="move">📦</button>
                 <button class="btn-delete" title="删除此程序" data-action="delete">🗑</button>
@@ -402,11 +416,17 @@
       const dropZone = document.getElementById('fileDropZone');
       const fileList = document.getElementById('fileList');
       const fileDropText = document.getElementById('fileDropText');
+      const questionFile = document.getElementById('questionFile');
+      const questionDropZone = document.getElementById('questionDropZone');
+      const questionPreview = document.getElementById('questionPreview');
+      const questionPreviewName = document.getElementById('questionPreviewName');
+      const questionDropText = document.getElementById('questionDropText');
       const btnSubmit = document.getElementById('btnSubmitUpload');
       const btnSubmitText = document.getElementById('btnSubmitText');
       const uploadSpinner = document.getElementById('uploadSpinner');
       const uploadStatus = document.getElementById('uploadStatus');
       let selectedFiles = [];
+      let selectedQuestionFile = null;
 
       // 打开弹窗
       document.getElementById('btnOpenUpload').addEventListener('click', () => {
@@ -434,6 +454,10 @@
         fileList.innerHTML = '';
         fileDropText.textContent = '点击选择文件，或拖拽 .html 文件到此处（支持多选）';
         fileDropText.className = '';
+        questionFile.value = '';
+        selectedQuestionFile = null;
+        questionPreview.style.display = 'none';
+        questionDropText.textContent = '点击选择题目文件（Word/图片/PDF）';
         btnSubmit.disabled = true;
         uploadStatus.style.display = 'none';
         uploadStatus.className = 'upload-status';
@@ -444,6 +468,28 @@
 
       // 文件选择：click
       dropZone.addEventListener('click', () => fileInput.click());
+      questionDropZone.addEventListener('click', () => questionFile.click());
+
+      questionFile.addEventListener('change', function() {
+        if (questionFile.files.length > 0) {
+          var f = questionFile.files[0];
+          if (f.size > 10 * 1024 * 1024) { alert('题目文件不能超过 10MB'); return; }
+          selectedQuestionFile = f;
+          questionPreview.style.display = 'flex';
+          questionPreviewName.textContent = f.name + ' (' + formatSize(f.size) + ')';
+          questionDropText.textContent = '✅ 已选择';
+          questionDropText.className = 'text-success';
+        }
+      });
+
+      document.getElementById('btnRemoveQuestion').addEventListener('click', function(e) {
+        e.stopPropagation(); e.preventDefault();
+        questionFile.value = '';
+        selectedQuestionFile = null;
+        questionPreview.style.display = 'none';
+        questionDropText.textContent = '点击选择题目文件（Word/图片/PDF）';
+        questionDropText.className = '';
+      });
 
       // 文件选择：change
       fileInput.addEventListener('change', () => {
@@ -499,11 +545,19 @@
         return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
       }
 
-      // 提交上传（支持批量）
+      // 提交上传（支持批量 + 题目附件）
       btnSubmit.addEventListener('click', async () => {
         if (selectedFiles.length === 0) return;
 
         const category = document.getElementById('uploadCategory').value;
+
+        // 准备题目文件
+        var questionBase64 = null, questionFileName = null;
+        if (selectedQuestionFile) {
+          questionBase64 = await readFileAsBase64(selectedQuestionFile);
+          questionFileName = selectedQuestionFile.name;
+        }
+
         btnSubmit.disabled = true;
         uploadSpinner.style.display = 'inline-block';
         uploadStatus.style.display = 'block';
@@ -519,10 +573,15 @@
 
           try {
             var base64 = await readFileAsBase64(file);
+            var body = { category: category, filename: file.name, content: base64 };
+            if (questionBase64) {
+              body.questionContent = questionBase64;
+              body.questionFile = questionFileName;
+            }
             var resp = await fetch('/upload', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ category: category, filename: file.name, content: base64 })
+              body: JSON.stringify(body)
             });
             var data = await resp.json();
             if (data.ok) { okCount++; results.push('✅ ' + file.name); }
