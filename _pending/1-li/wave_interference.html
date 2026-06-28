@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wave Interference Simulation - 两列波相向传播·相长干涉</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --blue: #58a6ff;
+    --red: #f78166;
+    --gold: #e3b341;
+    --green: #3fb950;
+    --purple: #bc8cff;
+    --accent: #79c0ff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .container {
+    width: 100%;
+    max-width: 1050px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 28px 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  h1 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    text-align: center;
+    color: var(--accent);
+    margin-bottom: 2px;
+    letter-spacing: 0.5px;
+  }
+  .subtitle {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+  }
+  .canvas-wrap {
+    position: relative;
+    background: #0a0e14;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    cursor: default;
+  }
+  .timeline-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .time-label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+    min-width: 48px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+  }
+  .timeline-track {
+    flex: 1;
+    height: 32px;
+    position: relative;
+    background: var(--bg);
+    border-radius: 16px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    overflow: visible;
+  }
+  .timeline-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: linear-gradient(90deg, rgba(88,166,255,0.25), rgba(88,166,255,0.45));
+    border-radius: 16px;
+    transition: width 60ms linear;
+    pointer-events: none;
+  }
+  .timeline-thumb {
+    position: absolute;
+    top: -4px; bottom: -4px;
+    width: 20px;
+    background: var(--accent);
+    border-radius: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    box-shadow: 0 0 10px rgba(121,192,255,0.6);
+  }
+  .timeline-marker {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: rgba(255,255,255,0.2);
+    pointer-events: none;
+  }
+  .timeline-marker.labeled {
+    background: rgba(255,255,255,0.35);
+    width: 1.5px;
+  }
+  .timeline-marker-text {
+    position: absolute;
+    top: 34px;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  button {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  button:hover { background: #21262d; border-color: #586069; }
+  button:active { background: #292e36; }
+  button.active {
+    background: #1f3a5f;
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 8px rgba(121,192,255,0.3);
+  }
+  button.accent {
+    background: #1a3a5c;
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  button.accent:hover { background: #1f4a7c; }
+  button.time-btn {
+    font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.78rem;
+    min-width: 52px;
+    justify-content: center;
+  }
+  .divider { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+  .legend {
+    display: flex;
+    gap: 18px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .legend .dot {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+  .time-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+  }
+  .time-badge.t-quarter { background: rgba(188,140,255,0.2); color: var(--purple); }
+  .time-badge.t-half    { background: rgba(227,179,65,0.2);  color: var(--gold); }
+  .time-badge.t-3quarter{ background: rgba(63,185,80,0.2);  color: var(--green); }
+  .time-badge.t-full    { background: rgba(247,129,102,0.2); color: var(--red); }
+  .info-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .info-row strong { color: var(--text); }
+  @media (max-width: 700px) {
+    .container { padding: 14px 10px 10px; }
+    h1 { font-size: 1.1rem; }
+    button { padding: 6px 10px; font-size: 0.75rem; }
+    .controls { gap: 4px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>两列波相向传播 · 相长干涉</h1>
+  <p class="subtitle">Wave Packet Constructive Interference — 单周期正弦波包相遇叠加</p>
+
+  <div class="legend">
+    <span><span class="dot" style="background:var(--blue)"></span> 右行波（蓝色，→）</span>
+    <span><span class="dot" style="background:var(--red)"></span> 左行波（红色，←）</span>
+    <span><span class="dot" style="background:var(--gold)"></span> 合成波（金色）</span>
+    <span>| 虚线: 相遇点</span>
+  </div>
+
+  <div class="canvas-wrap">
+    <canvas id="mainCanvas"></canvas>
+  </div>
+
+  <div class="info-row" id="infoRow">
+    <span>当前: <strong id="timeDisplay">t = 0.00 T</strong></span>
+    <span id="phaseDesc">初始状态 — 两波包边缘相距 λ，即将相向而行</span>
+  </div>
+
+  <div class="timeline-row">
+    <span class="time-label" id="timeLabel">0.00 T</span>
+    <div class="timeline-track" id="timeline">
+      <div class="timeline-fill" id="timelineFill" style="width:0%"></div>
+      <div class="timeline-thumb" id="timelineThumb" style="left:0%"></div>
+      <div class="timeline-marker labeled" style="left:12.5%"></div>
+      <div class="timeline-marker-text" style="left:12.5%">T/4</div>
+      <div class="timeline-marker labeled" style="left:25%"></div>
+      <div class="timeline-marker-text" style="left:25%">T/2</div>
+      <div class="timeline-marker labeled" style="left:37.5%"></div>
+      <div class="timeline-marker-text" style="left:37.5%">3T/4</div>
+      <div class="timeline-marker labeled" style="left:50%"></div>
+      <div class="timeline-marker-text" style="left:50%">T</div>
+      <div class="timeline-marker" style="left:62.5%"></div>
+      <div class="timeline-marker-text" style="left:62.5%;opacity:0.5">5T/4</div>
+      <div class="timeline-marker" style="left:75%"></div>
+      <div class="timeline-marker-text" style="left:75%;opacity:0.5">3T/2</div>
+      <div class="timeline-marker" style="left:87.5%"></div>
+      <div class="timeline-marker-text" style="left:87.5%;opacity:0.5">7T/4</div>
+      <div class="timeline-marker" style="left:100%"></div>
+      <div class="timeline-marker-text" style="left:100%;opacity:0.5">2T</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="btnReset" title="回到初始状态">⟲ 重置</button>
+    <button id="btnT4" class="time-btn" data-t="0.25">T/4</button>
+    <button id="btnT2" class="time-btn" data-t="0.5">T/2</button>
+    <button id="btnT34" class="time-btn" data-t="0.75">3T/4</button>
+    <button id="btnT" class="time-btn" data-t="1.0">T</button>
+    <button id="btnT54" class="time-btn" data-t="1.25">5T/4</button>
+    <button id="btnT32" class="time-btn" data-t="1.5">3T/2</button>
+    <button id="btnT74" class="time-btn" data-t="1.75">7T/4</button>
+    <button id="btn2T" class="time-btn" data-t="2.0">2T</button>
+    <span class="divider"></span>
+    <button id="btnPlay">▶ 播放</button>
+    <button id="btnPause" style="display:none">⏸ 暂停</button>
+    <span class="divider"></span>
+    <button id="btnSlower">慢放</button>
+    <button id="btnSpeed1" class="active">1×</button>
+    <button id="btnFaster">快放</button>
+    <span class="divider"></span>
+    <label style="display:flex;align-items:center;gap:4px;font-size:0.8rem;color:var(--text-dim);cursor:pointer">
+      <input type="checkbox" id="chkLoop"> 循环
+    </label>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ── DOM refs ──────────────────────────────────────────
+  const canvas = document.getElementById('mainCanvas');
+  const ctx = canvas.getContext('2d');
+  const timeline = document.getElementById('timeline');
+  const timelineFill = document.getElementById('timelineFill');
+  const timelineThumb = document.getElementById('timelineThumb');
+  const timeDisplay = document.getElementById('timeDisplay');
+  const timeLabel = document.getElementById('timeLabel');
+  const phaseDesc = document.getElementById('phaseDesc');
+  const chkLoop = document.getElementById('chkLoop');
+
+  // ── Physics parameters ────────────────────────────────
+  const lambda = 2.0;        // wavelength (arbitrary units)
+  const A = 1.0;             // amplitude per pulse
+  const k = 2 * Math.PI / lambda;
+  const T = 2.0;             // period (seconds for 1× speed)
+  const v = lambda / T;      // wave speed = 1 unit/s
+  const maxTime = 2.0 * T;   // timeline 0→2T, full round-trip process
+
+  // ── State ─────────────────────────────────────────────
+  let simTime = 0;
+  let speed = 1.0;           // speed multiplier
+  let playing = false;
+  let lastFrameTs = null;
+
+  // ── Wave functions ────────────────────────────────────
+  // 右行波 (blue, travels +x): initially occupies [-3λ/2, -λ/2], centered at -λ
+  //   ψ(x,0) = A·sin(k(x + 3λ/2)) = A·sin(kx + 3π) = -A·sin(kx)
+  //   shape: 0 → +A → 0 → -A → 0  (standard sin 0→2π cycle)
+  // 左行波 (red, travels -x): initially occupies [λ/2, 3λ/2], centered at λ
+  //   FLIPPED about x-axis: ψ(x,0) = -A·sin(k(x - λ/2)) = -A·sin(kx - π) = A·sin(kx)
+  //   shape: 0 → -A → 0 → +A → 0  (inverted sin cycle)
+  // Initial edge-to-edge gap = λ/2 - (-λ/2) = λ
+  function psiBlue(x, t) {
+    // 右行波: travels +x, starts at [-3λ/2, -λ/2]
+    const xRel = x - v * t;
+    if (xRel >= -1.5 * lambda && xRel <= -0.5 * lambda) {
+      return A * Math.sin(k * (xRel + 1.5 * lambda));
+    }
+    return 0;
+  }
+  function psiRed(x, t) {
+    // 左行波: travels -x, starts at [λ/2, 3λ/2], flipped about x-axis
+    const xRel = x + v * t;
+    if (xRel >= 0.5 * lambda && xRel <= 1.5 * lambda) {
+      return -A * Math.sin(k * (xRel - 0.5 * lambda));
+    }
+    return 0;
+  }
+  function psiTotal(x, t) {
+    return psiBlue(x, t) + psiRed(x, t);
+  }
+
+  // Legacy aliases for drawing code compatibility
+  const psiL = psiBlue;
+  const psiR = psiRed;
+
+  // ── Drawing ───────────────────────────────────────────
+  function resizeCanvas() {
+    const wrap = canvas.parentElement;
+    const w = wrap.clientWidth;
+    const dpr = window.devicePixelRatio || 1;
+    const W = Math.floor(w * dpr);
+    const H = Math.floor(500 * dpr);
+    if (canvas.width !== W || canvas.height !== H) {
+      canvas.width = W;
+      canvas.height = H;
+    }
+    return { w: canvas.width, h: canvas.height, dpr };
+  }
+
+  function draw() {
+    const { w, h, dpr } = resizeCanvas();
+    ctx.clearRect(0, 0, w, h);
+
+    // Coordinate mapping
+    const xMin = -2.2 * lambda;
+    const xMax =  2.2 * lambda;
+    const marginX = 60 * dpr;
+    const plotW = w - 2 * marginX;
+    const plotH = h * 0.78;
+    const originX = w / 2;
+    const originY = h * 0.52;
+    const pixelsPerUnit = plotW / (xMax - xMin);
+    const ampPx = A * pixelsPerUnit * lambda * 0.5; // A → display pixels
+
+    function toScreenX(x) { return originX + x * pixelsPerUnit; }
+    function toScreenY(psi) { return originY - psi * ampPx; }
+
+    // Amplitude scale: A maps to ~80px at 1× dpr
+    const actualAmpPx = pixelsPerUnit * lambda * 0.5;
+
+    // ── Grid ──────────────────────────────────────────
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1 * dpr;
+    // vertical grid at multiples of λ/2
+    for (let x = -2 * lambda; x <= 2 * lambda + 0.001; x += lambda / 2) {
+      const sx = toScreenX(x);
+      ctx.beginPath();
+      ctx.moveTo(sx, originY - plotH * 0.45);
+      ctx.lineTo(sx, originY + plotH * 0.45);
+      ctx.stroke();
+    }
+    // horizontal grid
+    for (let amp = -2; amp <= 2; amp += 0.5) {
+      const sy = toScreenY(amp);
+      ctx.beginPath();
+      ctx.moveTo(toScreenX(xMin), sy);
+      ctx.lineTo(toScreenX(xMax), sy);
+      ctx.stroke();
+    }
+
+    // ── Zero line ─────────────────────────────────────
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1.5 * dpr;
+    ctx.setLineDash([6 * dpr, 4 * dpr]);
+    ctx.beginPath();
+    ctx.moveTo(toScreenX(xMin), originY);
+    ctx.lineTo(toScreenX(xMax), originY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // ── Meeting point (x=0) ───────────────────────────
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1 * dpr;
+    ctx.setLineDash([4 * dpr, 6 * dpr]);
+    ctx.beginPath();
+    const mx = toScreenX(0);
+    ctx.moveTo(mx, originY - plotH * 0.45);
+    ctx.lineTo(mx, originY + plotH * 0.45);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // label
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = `${11 * dpr}px "PingFang SC","Microsoft YaHei",sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('相遇点', mx, originY - plotH * 0.45 - 6 * dpr);
+
+    // ── Axis labels ───────────────────────────────────
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = `${10 * dpr}px "PingFang SC","Microsoft YaHei",sans-serif`;
+    ctx.textAlign = 'center';
+    for (let x = -2 * lambda; x <= 2 * lambda + 0.001; x += lambda / 2) {
+      const sx = toScreenX(x);
+      const val = x / lambda;
+      let label = '';
+      if (Math.abs(val) < 0.001) label = '0';
+      else if (Math.abs(val - 1) < 0.001) label = 'λ';
+      else if (Math.abs(val + 1) < 0.001) label = '-λ';
+      else if (Math.abs(val - 2) < 0.001) label = '2λ';
+      else if (Math.abs(val + 2) < 0.001) label = '-2λ';
+      else if (Math.abs(val - 0.5) < 0.001) label = 'λ/2';
+      else if (Math.abs(val + 0.5) < 0.001) label = '-λ/2';
+      else if (Math.abs(val - 1.5) < 0.001) label = '3λ/2';
+      else if (Math.abs(val + 1.5) < 0.001) label = '-3λ/2';
+      if (label) ctx.fillText(label, sx, originY + plotH * 0.45 + 14 * dpr);
+    }
+
+    // ── Draw waves ────────────────────────────────────
+    const nPts = Math.floor(plotW / (2 * dpr)); // sample every ~2px
+    const xs = [];
+    for (let i = 0; i <= nPts; i++) {
+      xs.push(xMin + (i / nPts) * (xMax - xMin));
+    }
+
+    // Pre-compute wave values
+    const L = xs.map(x => psiL(x, simTime));
+    const R = xs.map(x => psiR(x, simTime));
+    const Tot = xs.map((_, i) => L[i] + R[i]);
+
+    // ── Filled areas under individual waves ──────────
+    function fillWave(values, color) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      let started = false;
+      for (let i = 0; i < xs.length; i++) {
+        const sx = toScreenX(xs[i]);
+        const sy = toScreenY(values[i]);
+        if (Math.abs(values[i]) > 0.002 || (i > 0 && Math.abs(values[i - 1]) > 0.002) || (i < xs.length - 1 && Math.abs(values[i + 1]) > 0.002)) {
+          if (!started) { ctx.moveTo(sx, originY); started = true; }
+          ctx.lineTo(sx, sy);
+        } else {
+          if (started) {
+            ctx.lineTo(sx, originY);
+            ctx.closePath();
+            started = false;
+          }
+        }
+      }
+      if (started) {
+        ctx.lineTo(toScreenX(xs[xs.length - 1]), originY);
+        ctx.closePath();
+      }
+      ctx.fill();
+    }
+    fillWave(L, 'rgba(88,166,255,0.12)');
+    fillWave(R, 'rgba(247,129,102,0.12)');
+
+    // ── Individual wave curves ────────────────────────
+    function drawCurve(values, color, lw, dash) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lw * dpr;
+      if (dash) ctx.setLineDash(dash.map(v => v * dpr));
+      ctx.beginPath();
+      let started = false;
+      for (let i = 0; i < xs.length; i++) {
+        const sx = toScreenX(xs[i]);
+        const sy = toScreenY(values[i]);
+        const nearZero = Math.abs(values[i]) < 0.003;
+        const prevNear = i > 0 && Math.abs(values[i - 1]) < 0.003;
+        const nextNear = i < xs.length - 1 && Math.abs(values[i + 1]) < 0.003;
+        if (!nearZero || !prevNear || !nextNear) {
+          if (!started) { ctx.moveTo(sx, sy); started = true; }
+          else { ctx.lineTo(sx, sy); }
+        } else {
+          started = false;
+        }
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    drawCurve(L, 'rgba(88,166,255,0.85)', 2.2, null);    // Left wave - blue
+    drawCurve(R, 'rgba(247,129,102,0.85)', 2.2, null);   // Right wave - red
+
+    // ── Combined wave curve ──────────────────────────
+    // thick glow + core
+    drawCurve(Tot, 'rgba(227,179,65,0.4)', 7, null);     // glow
+    drawCurve(Tot, 'rgba(227,179,65,0.9)', 3.2, null);   // core
+
+    // ── Envelope fill for combined ───────────────────
+    fillWave(Tot, 'rgba(227,179,65,0.08)');
+
+    // ── Amplitude reference lines ────────────────────
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 0.8 * dpr;
+    [1, -1, 2, -2].forEach(amp => {
+      const sy = toScreenY(amp);
+      ctx.beginPath();
+      ctx.moveTo(toScreenX(xMin), sy);
+      ctx.lineTo(toScreenX(xMax), sy);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.font = `${9 * dpr}px "JetBrains Mono","Consolas",monospace`;
+      ctx.textAlign = 'right';
+      ctx.fillText(amp > 0 ? `+${amp}A` : `${amp}A`, toScreenX(xMin) - 6 * dpr, sy + 3 * dpr);
+    });
+
+    // ── Time marker on canvas ────────────────────────
+    const tNorm = simTime / T;
+    const keyTimes = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
+    const badgeMap = { 0.25: 'T/4', 0.5: 'T/2', 0.75: '3T/4', 1.0: 'T', 1.25: '5T/4', 1.5: '3T/2', 1.75: '7T/4', 2.0: '2T' };
+    const hit = keyTimes.find(k => Math.abs(tNorm - k) < 0.005);
+    if (hit !== undefined) {
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.font = `bold ${18 * dpr}px "PingFang SC","Microsoft YaHei",sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.fillText('⏺ ' + badgeMap[hit], toScreenX(xMax) - 100 * dpr, originY - plotH * 0.38);
+    }
+
+    // ── Wave direction arrows ────────────────────────
+    function drawArrow(x, y, dx, color) {
+      const sx = toScreenX(x);
+      const sy = originY - y * actualAmpPx;
+      const ex = toScreenX(x + dx);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5 * dpr;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(ex, sy);
+      ctx.stroke();
+      // arrowhead
+      const ah = 6 * dpr;
+      const dir = Math.sign(dx);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(ex, sy);
+      ctx.lineTo(ex - dir * ah, sy - ah * 0.55);
+      ctx.lineTo(ex - dir * ah, sy + ah * 0.55);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Position arrows near the pulse centers
+    // 右行波 (blue): initially centered at -λ, travels +x
+    const centerBlue = -lambda + v * simTime;
+    // 左行波 (red): initially centered at λ, travels -x
+    const centerRed = lambda - v * simTime;
+    if (centerBlue < xMax && centerBlue > xMin) {
+      drawArrow(centerBlue, 0.15, 0.18, 'rgba(88,166,255,0.6)');
+    }
+    if (centerRed < xMax && centerRed > xMin) {
+      drawArrow(centerRed, 0.15, -0.18, 'rgba(247,129,102,0.6)');
+    }
+
+    // ── Legend inside canvas ──────────────────────────
+    ctx.fillStyle = 'rgba(88,166,255,0.9)';
+    ctx.font = `${11 * dpr}px "PingFang SC","Microsoft YaHei",sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.fillText('右行波 →', toScreenX(xMin) + 8 * dpr, originY - plotH * 0.42);
+    ctx.fillStyle = 'rgba(247,129,102,0.9)';
+    ctx.textAlign = 'right';
+    ctx.fillText('← 左行波', toScreenX(xMax) - 8 * dpr, originY - plotH * 0.42);
+    ctx.fillStyle = 'rgba(227,179,65,0.9)';
+    ctx.textAlign = 'center';
+    ctx.fillText('合成波', originX, originY - plotH * 0.42);
+
+    // ── Highlight overlap region (overlap from T/2 to 3T/2) ──
+    if (tNorm > 0.24 && tNorm < 0.76) {
+      // Draw a subtle highlight behind the overlap region
+      // 右行波 domain: [-1.5λ + vt, -0.5λ + vt]
+      // 左行波 domain: [0.5λ - vt, 1.5λ - vt]
+      const blueL = -1.5 * lambda + v * simTime;
+      const blueR = -0.5 * lambda + v * simTime;
+      const redL  =  0.5 * lambda - v * simTime;
+      const redR  =  1.5 * lambda - v * simTime;
+      const overlapL = Math.max(blueL, redL);
+      const overlapR = Math.min(blueR, redR);
+      if (overlapR > overlapL + 0.01) {
+        const sx1 = toScreenX(overlapL);
+        const sx2 = toScreenX(overlapR);
+        ctx.fillStyle = 'rgba(227,179,65,0.04)';
+        ctx.fillRect(sx1, originY - plotH * 0.45, sx2 - sx1, plotH * 0.9);
+        ctx.strokeStyle = 'rgba(227,179,65,0.15)';
+        ctx.lineWidth = 1 * dpr;
+        ctx.strokeRect(sx1, originY - plotH * 0.45, sx2 - sx1, plotH * 0.9);
+
+        // Overlap label
+        const midX = (sx1 + sx2) / 2;
+        ctx.fillStyle = 'rgba(227,179,65,0.4)';
+        ctx.font = `${9 * dpr}px "PingFang SC","Microsoft YaHei",sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('叠加区', midX, originY + plotH * 0.45 - 2 * dpr);
+      }
+    }
+  }
+
+  // ── UI Update ─────────────────────────────────────────
+  function updateUI() {
+    const tNorm = simTime / T;
+    const pct = Math.min(100, Math.max(0, (simTime / maxTime) * 100));
+    timelineFill.style.width = pct + '%';
+    timelineThumb.style.left = pct + '%';
+    timeDisplay.textContent = 't = ' + simTime.toFixed(2) + ' T';
+    timeLabel.textContent = simTime.toFixed(2) + ' T';
+
+    // Phase description (tNorm = simTime/T, range 0→2)
+    if (tNorm < 0.02) {
+      phaseDesc.textContent = '初始状态 — 两波包边缘相距 λ，右行波(蓝)→ ←左行波(红)，即将相向而行';
+    } else if (tNorm < 0.23) {
+      phaseDesc.textContent = '接近中 — 波包尚未相遇，间隙逐渐缩小，各自匀速传播';
+    } else if (tNorm < 0.27) {
+      phaseDesc.innerHTML = '⏺ <span style="color:var(--purple);font-weight:600">T/4</span> — 间隙缩小为 λ/2，仍在接近中';
+    } else if (tNorm < 0.48) {
+      const gap = ((0.5 - tNorm) * lambda).toFixed(1);
+      phaseDesc.textContent = `持续接近 — 两波包间隙约 ${gap}λ，即将接触`;
+    } else if (tNorm < 0.52) {
+      phaseDesc.innerHTML = '⏺ <span style="color:var(--gold);font-weight:600">T/2</span> — 两波包边缘在相遇点首次接触！';
+    } else if (tNorm < 0.73) {
+      phaseDesc.textContent = '部分重叠 — 叠加区内发生干涉，合成波振幅逐渐增大';
+    } else if (tNorm < 0.77) {
+      phaseDesc.innerHTML = '⏺ <span style="color:var(--green);font-weight:600">3T/4</span> — 相长干涉！叠加区内振幅加倍至 2A';
+    } else if (tNorm < 0.98) {
+      phaseDesc.textContent = '接近完全重叠 — 叠加区扩大，但相位差导致干涉从相长转为相消';
+    } else if (tNorm < 1.02) {
+      phaseDesc.innerHTML = '⏺ <span style="color:var(--red);font-weight:600">T</span> — 完全重叠，两波包因 π 相位差完全抵消！（左行波经 x 轴翻转所致）';
+    } else if (tNorm < 1.23) {
+      phaseDesc.textContent = '开始分离 — 叠加区逐渐缩小，波形重新浮现';
+    } else if (tNorm < 1.27) {
+      phaseDesc.innerHTML = '⏺ <span style="color:var(--purple);font-weight:600">5T/4</span> — 部分重叠，干涉减弱中';
+    } else if (tNorm < 1.48) {
+      phaseDesc.textContent = '接近完全分离 — 叠加区域越来越小';
+    } else if (tNorm < 1.52) {
+      phaseDesc.innerHTML = '⏺ <span style="color:var(--gold);font-weight:600">3T/2</span> — 两波包边缘在相遇点最后接触，即将分离';
+    } else if (tNorm < 1.73) {
+      phaseDesc.textContent = '已分离 — 两波包各自继续传播，间隙逐渐增大';
+    } else if (tNorm < 1.77) {
+      phaseDesc.innerHTML = '⏺ <span style="color:var(--green);font-weight:600">7T/4</span> — 间隙扩大为 λ/2，波形完好如初';
+    } else if (tNorm < 1.98) {
+      const gap2 = ((tNorm - 1.5) * lambda).toFixed(1);
+      phaseDesc.textContent = `持续远离 — 两波包间隙约 ${gap2}λ，各自匀速传播`;
+    } else {
+      phaseDesc.innerHTML = '⏺ <span style="color:var(--accent);font-weight:600">2T</span> — 一个完整周期结束，波包恢复初始间距 λ，位置互换';
+    }
+  }
+
+  function updateAll() {
+    draw();
+    updateUI();
+  }
+
+  // ── Animation loop ────────────────────────────────────
+  function animate(timestamp) {
+    if (!playing) { lastFrameTs = null; return; }
+    if (lastFrameTs === null) { lastFrameTs = timestamp; }
+    let dt = (timestamp - lastFrameTs) / 1000;
+    lastFrameTs = timestamp;
+
+    // Clamp dt to avoid jumps
+    if (dt > 0.2) dt = 0.2;
+    if (dt <= 0) dt = 0.016;
+
+    simTime += dt * speed;
+
+    if (simTime >= maxTime) {
+      if (chkLoop.checked) {
+        simTime = 0;
+      } else {
+        simTime = maxTime;
+        pause();
+      }
+    }
+    if (simTime < 0) simTime = 0;
+
+    updateAll();
+
+    if (playing) {
+      requestAnimationFrame(animate);
+    } else {
+      lastFrameTs = null;
+    }
+  }
+
+  function play() {
+    if (playing) return;
+    if (simTime >= maxTime && !chkLoop.checked) simTime = 0;
+    playing = true;
+    lastFrameTs = null;
+    document.getElementById('btnPlay').style.display = 'none';
+    document.getElementById('btnPause').style.display = '';
+    requestAnimationFrame(animate);
+  }
+
+  function pause() {
+    playing = false;
+    lastFrameTs = null;
+    document.getElementById('btnPlay').style.display = '';
+    document.getElementById('btnPause').style.display = 'none';
+  }
+
+  function setTime(t) {
+    simTime = Math.max(0, Math.min(maxTime, t));
+    updateAll();
+  }
+
+  // ── Event handlers ────────────────────────────────────
+  document.getElementById('btnPlay').addEventListener('click', play);
+  document.getElementById('btnPause').addEventListener('click', pause);
+
+  document.getElementById('btnReset').addEventListener('click', () => {
+    pause();
+    setTime(0);
+  });
+
+  document.querySelectorAll('.time-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tNorm = parseFloat(btn.dataset.t);
+      setTime(tNorm * T);
+      // Brief highlight pulse
+      btn.classList.add('active');
+      setTimeout(() => btn.classList.remove('active'), 400);
+    });
+  });
+
+  document.getElementById('btnSlower').addEventListener('click', () => {
+    speed = Math.max(0.125, speed / 2);
+    updateSpeedBtns();
+  });
+  document.getElementById('btnSpeed1').addEventListener('click', () => {
+    speed = 1.0;
+    updateSpeedBtns();
+  });
+  document.getElementById('btnFaster').addEventListener('click', () => {
+    speed = Math.min(8, speed * 2);
+    updateSpeedBtns();
+  });
+
+  function updateSpeedBtns() {
+    document.getElementById('btnSpeed1').textContent = speed.toFixed(speed < 1 ? 3 : 0).replace(/\.?0+$/, '') + '×';
+    document.getElementById('btnSpeed1').classList.toggle('active', speed === 1.0);
+  }
+
+  // Timeline dragging
+  let dragging = false;
+  function timelineValueFromEvent(e) {
+    const rect = timeline.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    return Math.max(0, Math.min(1, x / rect.width));
+  }
+  timeline.addEventListener('mousedown', e => {
+    dragging = true;
+    const wasPlaying = playing;
+    pause();
+    setTime(timelineValueFromEvent(e) * maxTime);
+    // store previous play state
+    timeline._wasPlaying = wasPlaying;
+  });
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    setTime(timelineValueFromEvent(e) * maxTime);
+  });
+  window.addEventListener('mouseup', () => {
+    if (dragging && timeline._wasPlaying) {
+      play();
+    }
+    dragging = false;
+  });
+  // Touch support
+  timeline.addEventListener('touchstart', e => {
+    dragging = true;
+    const wasPlaying = playing;
+    pause();
+    setTime(timelineValueFromEvent(e.touches[0]) * maxTime);
+    timeline._wasPlaying = wasPlaying;
+    e.preventDefault();
+  });
+  window.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    setTime(timelineValueFromEvent(e.touches[0]) * maxTime);
+  });
+  window.addEventListener('touchend', () => {
+    if (dragging && timeline._wasPlaying) play();
+    dragging = false;
+  });
+
+  // Keyboard shortcuts
+  window.addEventListener('keydown', e => {
+    switch (e.key.toLowerCase()) {
+      case ' ': e.preventDefault(); playing ? pause() : play(); break;
+      case 'arrowleft':  setTime(simTime - 0.05 * T); break;
+      case 'arrowright': setTime(simTime + 0.05 * T); break;
+      case '1': setTime(0.25 * T); break;
+      case '2': setTime(0.50 * T); break;
+      case '3': setTime(0.75 * T); break;
+      case '4': setTime(1.00 * T); break;
+      case '5': setTime(1.25 * T); break;
+      case '6': setTime(1.50 * T); break;
+      case '7': setTime(1.75 * T); break;
+      case '8': setTime(2.00 * T); break;
+      case '0': setTime(0); break;
+      case 'r': pause(); setTime(0); break;
+    }
+  });
+
+  // Resize handling
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => updateAll(), 150);
+  });
+
+  // ── Initialize ─────────────────────────────────────────
+  resizeCanvas();
+  updateAll();
+
+  console.log('🌊 Wave Interference Simulation Ready');
+  console.log('   Controls: Space=Play/Pause, 1-4=T/4→T, 5-8=5T/4→2T');
+  console.log('   Drag the timeline to scrub, arrow keys to fine-tune');
+})();
+</script>
+</body>
+</html>
