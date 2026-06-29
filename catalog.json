@@ -9,6 +9,13 @@
       "desc": "牛顿定律、运动学、万有引力等",
       "programs": [
         {
+          "file": "波的叠加.html",
+          "title": "波的叠加",
+          "path": "1-li/波的叠加.html",
+          "author": "",
+          "questionFile": ""
+        },
+        {
           "file": "示玻管3D.html",
           "title": "示玻管3D",
           "path": "1-li/示玻管3D.html",
@@ -96,6 +103,6 @@
       "description": "玻尔模型、能级跃迁、原子核等"
     }
   ],
-  "totalPrograms": 2,
-  "updatedAt": "2026-06-29T09:27:13.984Z"
+  "totalPrograms": 3,
+  "updatedAt": "2026-06-29T11:34:50.316Z"
 }
