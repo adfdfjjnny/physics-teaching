@@ -9,6 +9,13 @@
       "desc": "牛顿定律、运动学、万有引力等",
       "programs": [
         {
+          "file": "示玻管3D.html",
+          "title": "示玻管3D",
+          "path": "1-li/示玻管3D.html",
+          "author": "",
+          "questionFile": ""
+        },
+        {
           "file": "驻波演示.html",
           "title": "驻波演示",
           "path": "1-li/驻波演示.html",
@@ -89,6 +96,6 @@
       "description": "玻尔模型、能级跃迁、原子核等"
     }
   ],
-  "totalPrograms": 1,
-  "updatedAt": "2026-06-29T09:26:00.698Z"
+  "totalPrograms": 2,
+  "updatedAt": "2026-06-29T09:27:13.984Z"
 }
